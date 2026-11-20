@@ -24,9 +24,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="2"
-     inkscape:cx="426.75"
-     inkscape:cy="602.5"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="434.69389"
+     inkscape:cy="643.82072"
      inkscape:window-width="2560"
      inkscape:window-height="1368"
      inkscape:window-x="0"
@@ -95,6 +95,12 @@
        width="63.30426"
        height="36.648605"
        id="rect698-3-0-5" />
+    <rect
+       x="214.5085"
+       y="386.07465"
+       width="90.669434"
+       height="20.670765"
+       id="rect698-9-2-0-8" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -108,7 +114,7 @@
        x="77.40815"
        y="103.55456" />
     <rect
-       style="fill:#338000;stroke-width:0.264583"
+       style="fill:#225500;stroke-width:0.264583"
        id="rect131-3-6"
        width="56.410114"
        height="51.093941"
@@ -175,7 +181,7 @@
        style="white-space:pre;shape-inside:url(#rect698);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1814">plants</tspan></text>
+         id="tspan1957">plants</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,-19.920317,9.3508605)"
@@ -183,7 +189,7 @@
        style="white-space:pre;shape-inside:url(#rect698-3);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1816">tree</tspan></text>
+         id="tspan1959">tree</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,42.441076,17.308941)"
@@ -191,7 +197,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1818">shallow</tspan></text>
+         id="tspan1961">shallow</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,36.087078,2.4793601)"
@@ -199,7 +205,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9-8);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1820">entrance for kids</tspan></text>
+         id="tspan1963">entrance for kids</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,45.393781,45.080697)"
@@ -207,7 +213,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9-2);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1822">deep</tspan></text>
+         id="tspan1965">deep</tspan></text>
     <rect
        style="fill:#786721;stroke-width:0.264583"
        id="rect131-7"
@@ -222,7 +228,7 @@
        style="white-space:pre;shape-inside:url(#rect698-3-0);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1824">dock</tspan></text>
+         id="tspan1967">dock</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,6.1461692,24.41579)"
@@ -230,29 +236,29 @@
        style="white-space:pre;shape-inside:url(#rect698-3-0-6);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1826">filter</tspan></text>
+         id="tspan1969">filter</tspan></text>
     <rect
-       style="fill:#808000;stroke-width:0.264583"
-       id="rect131"
-       width="4.3286505"
-       height="42.19561"
-       x="129.6676"
-       y="138.51558" />
+       style="fill:#338000;stroke-width:0.264583"
+       id="rect131-22"
+       width="9.0111856"
+       height="51.131588"
+       x="124.869"
+       y="133.49957" />
     <rect
        style="fill:#225500;stroke-width:0.264583"
        id="rect131-2"
-       width="3.893609"
-       height="50.839695"
-       x="134.0242"
-       y="133.57285" />
+       width="4.1081095"
+       height="42.193558"
+       x="134.0649"
+       y="138.45714" />
     <text
        xml:space="preserve"
-       transform="matrix(0,-0.26458333,0.26458333,0,28.074894,226.7606)"
-       id="text696-1-7-9"
-       style="white-space:pre;shape-inside:url(#rect698-9-2-0);display:inline;fill:#ffffff"><tspan
+       transform="matrix(0,-0.26458333,0.26458333,0,22.768998,226.98875)"
+       id="text696-1-7-9-9"
+       style="white-space:pre;shape-inside:url(#rect698-9-2-0-8);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1828">seat/ spillway</tspan></text>
+         id="tspan1971">seat</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0,-0.26458333,0.26458333,0,32.055987,220.16703)"
@@ -262,7 +268,7 @@
        inkscape:transform-center-y="5.2895915"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1830">drain</tspan></text>
+         id="tspan1973">drain</tspan></text>
     <rect
        style="fill:#999999;stroke-width:0.264583"
        id="rect131-7-3-5-6-7"
@@ -277,9 +283,24 @@
        style="white-space:pre;shape-inside:url(#rect698-3-0-5);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1832">rock </tspan><tspan
+         id="tspan1975">rock </tspan><tspan
          x="214.50781"
          y="411.99272"
-         id="tspan1834">fountain</tspan></text>
+         id="tspan1977">fountain</tspan></text>
+    <rect
+       style="fill:#999999;stroke-width:0.264583"
+       id="rect131"
+       width="4.3286505"
+       height="42.19561"
+       x="129.6676"
+       y="138.51558" />
+    <text
+       xml:space="preserve"
+       transform="matrix(0,-0.26458333,0.26458333,0,27.910611,227.92274)"
+       id="text696-1-7-9"
+       style="white-space:pre;shape-inside:url(#rect698-9-2-0);display:inline;fill:#ffffff"><tspan
+         x="214.50781"
+         y="396.99272"
+         id="tspan1979">spillway</tspan></text>
   </g>
 </svg>

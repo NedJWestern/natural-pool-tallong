@@ -142,8 +142,9 @@ function build(p) {
   const spL = Math.min(p.spillway.length, dz1 - dz0);
   const spZ0 = Math.max(dz0, Math.min(dz1 - spL, p.spillway.centre - spL / 2));
   const spZ1 = spZ0 + spL;
-  const seatW = Math.min(p.spillway.seatWidth, W / 2);
-  const seatTop = -Math.min(p.spillway.seatDepth, D - 0.2);
+  const seatW = Math.min(p.seat.width, W / 2);
+  const seatTop = -Math.min(p.seat.depth, D - 0.2);
+  const spW = Math.min(p.spillway.width, seatW - 0.1);
   const drW = Math.max(0.15, p.drain.width), drD = Math.max(0.1, p.drain.depth);
   const drX0 = hx + t, drX1 = hx + t + drW;
   const drainWater = -drD + 0.07;
@@ -205,8 +206,10 @@ function build(p) {
   add(boxBetween(hx, hx + t, -D, 0, spZ1, hz + t, mat.wall));
   // Spillway: the wall is lowered to water level above the seat
   add(boxBetween(hx, hx + t, -D, wl, spZ0, spZ1, mat.ledge));
-  // Seat along the inside of the downhill wall
-  add(boxBetween(hx - seatW, hx, -D, seatTop, spZ0, spZ1, mat.ledge));
+  // Seat along the inside of the downhill wall, the full length of the deep zone
+  add(boxBetween(hx - seatW, hx, -D, seatTop, dz0, dz1, mat.ledge));
+  // Spillway step at the back of the seat, its top level with the lowered wall
+  add(boxBetween(hx - spW, hx, seatTop, wl, spZ0, spZ1, mat.ledge));
   // End walls
   add(boxBetween(-hx, hx, -D, 0, -hz - t, -hz, mat.wall));
   add(boxBetween(-hx, hx, -D, 0, hz, hz + t, mat.wall));
@@ -241,19 +244,17 @@ function build(p) {
   }
 
   // Coping stones around the top of the walls (not over the spillway).
-  // On the downhill side they also close off the ground beside the drain.
+  // On the downhill side they also close off the ground beyond the ends of the drain.
   const cy0 = -0.01, cy1 = 0.06, ov = 0.06, out = 0.12;
   add(boxBetween(-hx - t - out, -hx + ov, cy0, cy1, -hz - t - out, hz + t + out, mat.coping));
-  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, -hz - t - out, dz0, mat.coping));
-  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, dz1, hz + t + out, mat.coping));
-  add(boxBetween(hx - ov, hx + t + 0.03, cy0, cy1, dz0, spZ0, mat.coping));
-  add(boxBetween(hx - ov, hx + t + 0.03, cy0, cy1, spZ1, dz1, mat.coping));
+  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, -hz - t - out, spZ0, mat.coping));
+  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, spZ1, hz + t + out, mat.coping));
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, -hz - t - out, -hz + ov, mat.coping));
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, hz - ov, hz + t + out, mat.coping));
 
   // Drain channel: gravel floor, low stone kerb on the outer side, a little water
-  add(boxBetween(drX0, drX1, -drD - 0.1, -drD, dz0, dz1, mat.gravel));
-  add(boxBetween(drX1 - 0.08, drX1 + 0.02, -drD, lowEdge, dz0, dz1, mat.coping)); // kerb below the lip
+  add(boxBetween(drX0, drX1, -drD - 0.1, -drD, spZ0, spZ1, mat.gravel));
+  add(boxBetween(drX1 - 0.08, drX1 + 0.02, -drD, lowEdge, spZ0, spZ1, mat.coping)); // kerb below the lip
 
   // Water surfaces: pool, drain, and the sheet falling over the spillway into the drain
   const waterPlane = (w, l, x, y, z) => {
@@ -264,7 +265,7 @@ function build(p) {
   };
   waterPlane(W, L, 0, wl, 0);
   waterPlane(t, spL, hx + t / 2, wl + 0.008, (spZ0 + spZ1) / 2);
-  waterPlane(drW - 0.08, dz1 - dz0, (drX0 + drX1 - 0.08) / 2, drainWater, (dz0 + dz1) / 2);
+  waterPlane(drW - 0.08, spL, (drX0 + drX1 - 0.08) / 2, drainWater, (spZ0 + spZ1) / 2);
   {
     const sheet = add(mesh(new THREE.PlaneGeometry(spL, wl - drainWater), mat.cascade, { cast: false, receive: false }));
     sheet.rotation.y = Math.PI / 2;
@@ -487,7 +488,8 @@ function build(p) {
       label('shallow · entrance for kids', 0, wl + 0.05, (-hz + dz0) / 2),
       label('shallow', 0, wl + 0.05, (dz1 + hz) / 2),
       label('plants', (beds[0].x0 + beds[0].x1) / 2, 1.2, (beds[0].z0 + beds[0].z1) / 2),
-      label('seat / spillway', hx - seatW / 2, 0.25, (spZ0 + spZ1) / 2),
+      label('seat', hx - seatW + 0.2, wl + 0.05, dz1 - 0.5),
+      label('spillway', hx - spW / 2, 0.25, (spZ0 + spZ1) / 2),
       label('drain', (drX0 + drX1) / 2, 0.25, dz1 - 0.6),
       ...(fnt.enabled ? [label('rock fountain', fnt.x, wl + fnt.height + 0.4, fnt.z)] : []),
       label('dock', (dock.x0 + dock.x1) / 2, 0.45, (dock.z0 + dock.z1) / 2),
@@ -548,8 +550,9 @@ fb.add(params.planting, 'lilyPads', 0, 60, 1).name('lily pads').onChange(rebuild
 const ff = gui.addFolder('Spillway, dock, filter');
 ff.add(params.spillway, 'centre', -6, 6, 0.05).name('spillway centre').onChange(rebuild);
 ff.add(params.spillway, 'length', 0.5, 10, 0.05).name('spillway length').onChange(rebuild);
-ff.add(params.spillway, 'seatWidth', 0.2, 1.2, 0.05).name('seat width').onChange(rebuild);
-ff.add(params.spillway, 'seatDepth', 0.2, 1.2, 0.05).name('seat depth').onChange(rebuild);
+ff.add(params.spillway, 'width', 0.1, 1.0, 0.05).name('spillway width').onChange(rebuild);
+ff.add(params.seat, 'width', 0.3, 1.5, 0.05).name('seat width').onChange(rebuild);
+ff.add(params.seat, 'depth', 0.2, 1.2, 0.05).name('seat depth').onChange(rebuild);
 ff.add(params.drain, 'width', 0.15, 1.2, 0.05).name('drain width').onChange(rebuild);
 ff.add(params.drain, 'depth', 0.1, 0.8, 0.05).name('drain depth').onChange(rebuild);
 ff.add(params.dock, 'centre', -6, 6, 0.05).name('dock centre').onChange(rebuild);

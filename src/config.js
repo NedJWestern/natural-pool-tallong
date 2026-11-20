@@ -32,11 +32,15 @@ export const config = {
     topDepth: 0.2,       // bed surface below ground level (just under water)
   },
 
-  // Seat inside the downhill (+x) wall of the deep zone. Above it the wall is lowered
-  // to water level, so water spills over into the drain.
-  spillway: { centre: -0.1, length: 4.2, seatWidth: 0.45, seatDepth: 0.45 },
+  // Underwater seat along the inside of the downhill (+x) wall, the full length of
+  // the deep zone.
+  seat: { width: 0.9, depth: 0.45 },
 
-  // Drain channel outside the downhill wall, along the deep zone. The water collected
+  // Spillway: a step at the back of the seat whose top, like the wall behind it, is at
+  // water level (infinity edge), so water spills over into the drain.
+  spillway: { centre: -0.1, length: 4.2, width: 0.43 },
+
+  // Drain channel outside the downhill wall, behind the spillway. The water collected
   // here is pumped back to the filter (pipework not modelled).
   drain: { width: 0.4, depth: 0.3 },
 
