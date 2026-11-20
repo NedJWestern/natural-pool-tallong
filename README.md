@@ -65,9 +65,21 @@ The panel bottom-left shows the pool, deep-zone, shallow and planted areas, the 
 
 For debugging, the browser console has `window.pool` (`camera`, `controls`, `params`, `scene`).
 
+### Deploying
+
+The model is published at <https://littlegecko.party/natural-pool/>. After pushing, deploy on the droplet:
+
+```sh
+ssh bluering
+cd ~/repos/natural-pool-talong && make deploy
+```
+
+This copies `index.html` and `src/` to `/var/www/natural-pool`, which Caddy serves directly. The route itself lives in the `little-gecko-party` repo (`setup/Caddyfile`). The site is behind Cloudflare, which caches `.js` files, so a change to `src/` may need a Cloudflare cache purge before everyone sees it.
+
 ### Files
 
 - `2d_top_view.svg` — the plan drawing (Inkscape)
+- `Makefile` — `make deploy`, run on the droplet
 - `index.html` — page shell and library imports (Three.js 0.160, lil-gui 0.19 from jsDelivr)
 - `src/config.js` — design parameters
 - `src/main.js` — scene construction, GUI and stats
