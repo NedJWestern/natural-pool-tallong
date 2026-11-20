@@ -20,7 +20,7 @@ Along its length the pool runs: **kids' entrance (shallow)** → **deep zone** �
 | Kids' entrance | open shallow area between the corner beds at one end | two entry steps from the edge | kept clear of plants so children can walk through to the deep zone |
 | Planted beds | 4 corner beds 1.25 × 2.85 m, plus a 1 m strip along the far end wall (17 m², 27 % of surface) | bed surface 0.2 m below ground (~12 cm water) | reeds; lilies in the open shallow water at the planted end |
 | Seat | 0.9 m wide, along the full length of the deep zone's downhill wall | 0.45 m below ground | underwater bench facing into the pool, backed by the spillway |
-| Spillway | 4.2 × 0.43 m step at the back of the seat | top at water level, as is the wall behind it | infinity edge: water spills over into the drain; somewhere to rest your arms while looking out |
+| Spillway | 4.2 × 0.43 m step at the back of the seat | top 2 cm below water level, as is the wall behind it | infinity edge: water spills over into the drain; somewhere to rest your arms while looking out |
 | Drain | 0.4 m wide, behind the spillway (4.2 m) | 0.3 m deep | outer kerb and the ground beyond sit below the spillway lip, so nothing rises above the water in the view |
 | Dock | 3.4 × 2.15 m timber deck | 0.18 m above ground | uphill side, beside the deep zone, with a ladder into it |
 | Filter | 2.8 × 2.15 m chamber | 0.35 m above ground | uphill side, next to the dock |

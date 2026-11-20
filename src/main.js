@@ -26,7 +26,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xbfd9ea);
 scene.fog = new THREE.Fog(0xbfd9ea, 40, 100);
 
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 300);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 300);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = false; // stop as soon as the mouse is released
 controls.maxPolarAngle = Math.PI * 0.495;
@@ -205,11 +205,14 @@ function build(p) {
   add(boxBetween(hx, hx + t, -D, 0, -hz - t, spZ0, mat.wall));
   add(boxBetween(hx, hx + t, -D, 0, spZ1, hz + t, mat.wall));
   // Spillway: the wall is lowered to water level above the seat
-  add(boxBetween(hx, hx + t, -D, wl, spZ0, spZ1, mat.ledge));
+  // (2 cm below the water line: water flows over in a thin film, and no surface sits
+  // exactly at water level, which would flicker against the water plane)
+  const lip = wl - 0.02;
+  add(boxBetween(hx, hx + t, -D, lip, spZ0, spZ1, mat.ledge));
   // Seat along the inside of the downhill wall, the full length of the deep zone
   add(boxBetween(hx - seatW, hx, -D, seatTop, dz0, dz1, mat.ledge));
   // Spillway step at the back of the seat, its top level with the lowered wall
-  add(boxBetween(hx - spW, hx, seatTop, wl, spZ0, spZ1, mat.ledge));
+  add(boxBetween(hx - spW, hx, seatTop, lip, spZ0, spZ1, mat.ledge));
   // End walls
   add(boxBetween(-hx, hx, -D, 0, -hz - t, -hz, mat.wall));
   add(boxBetween(-hx, hx, -D, 0, hz, hz + t, mat.wall));
@@ -264,7 +267,7 @@ function build(p) {
     m.renderOrder = 10;
   };
   waterPlane(W, L, 0, wl, 0);
-  waterPlane(t, spL, hx + t / 2, wl + 0.008, (spZ0 + spZ1) / 2);
+  waterPlane(t, spL, hx + t / 2, wl, (spZ0 + spZ1) / 2);
   waterPlane(drW - 0.08, spL, (drX0 + drX1 - 0.08) / 2, drainWater, (spZ0 + spZ1) / 2);
   {
     const sheet = add(mesh(new THREE.PlaneGeometry(spL, wl - drainWater), mat.cascade, { cast: false, receive: false }));
