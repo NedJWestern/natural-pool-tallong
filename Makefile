@@ -3,7 +3,7 @@
 # Deploy the 3D model to https://littlegecko.party/natural-pool/
 #
 # Runs locally on the droplet (ssh alias `bluering`), like the other apps'
-# targets: `ssh bluering`, then `cd ~/repos/natural-pool-talong && make deploy`.
+# targets: `ssh bluering`, then `cd ~/repos/natural-pool-tallong && make deploy`.
 # Run as root.
 #
 # Only the page itself (index.html + src/) is copied to /var/www/natural-pool,

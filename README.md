@@ -1,6 +1,6 @@
 # Natural pool
 
-Plans for a natural swimming pool in Talong
+Plans for a natural swimming pool in Tallong
 
 ## Design summary
 
@@ -71,7 +71,7 @@ The model is published at <https://littlegecko.party/natural-pool/>. After pushi
 
 ```sh
 ssh bluering
-cd ~/repos/natural-pool-talong && make deploy
+cd ~/repos/natural-pool-tallong && make deploy
 ```
 
 This copies `index.html` and `src/` to `/var/www/natural-pool`, which Caddy serves directly. The route itself lives in the `little-gecko-party` repo (`setup/Caddyfile`). The site is behind Cloudflare, which caches `.js` files, so a change to `src/` may need a Cloudflare cache purge before everyone sees it.
