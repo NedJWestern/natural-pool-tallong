@@ -37,23 +37,13 @@ Water spills over the infinity-edge spillway into the drain. From there it is pu
 ### Open points
 
 - **Drop-off at the kids' entrance:** the floor steps straight from 0.5 m to 1.8 m where the shallow entrance meets the deep zone. Consider a gentle slope, a step or a barrier.
-- **Planting share:** the beds cover about 24 % of the surface. Unfiltered natural pools usually need far more, so water quality depends on the filter.
+- **Planting share:** the beds in the pool cover about 24 % of the surface. Natural pools without a separate filter usually need far more, so water quality depends on the reed-bed filter and its pump.
 - **Edging beside the spillway:** the stone coping on either side of the spillway is 14 cm higher than the lip. It sits beside the view rather than in front of it, but it could be lowered, or the spillway extended along the whole seat.
 - **Scale:** all sizes follow from the assumed drawing scale and still need confirming.
 
 ## 3D model
 
-A parametric Three.js model of the pool, translated from the plan drawing `2d_top_view.svg` (taken at 1 mm = 10 cm, so roughly 5.7 × 11.4 m):
-
-- a full-width **deep** swim zone in the middle, with **shallow** zones at each end
-- one shallow end is the **entrance for kids**: kept clear of plants, with entry steps
-- **planted beds** (reeds) in the four corners plus a strip along the far end wall; lilies in the open shallow water at that end
-- a timber **dock** with a ladder and a reed-bed **filter** on the uphill side
-- an underwater **seat** along the downhill wall of the deep zone, with an infinity-edge **spillway** step at its back spilling into a **drain** channel (kerb and ground beyond kept below the lip, so nothing rises above the water in the view), from which water is pumped back to the filter
-- the site on a slight hill falling towards the spillway, levelled to a terrace around the pool
-- a small **rock fountain** in the far-end planted strip
-- **border planting** (grasses, irises, shrubs) around the outside, leaving the downhill view open
-- two trees, labels matching the drawing
+A parametric Three.js model of the design above, built in the browser from `src/config.js` each time the page loads.
 
 ### Viewing
 
@@ -63,18 +53,21 @@ The page uses ES modules, so it must be served over HTTP rather than opened as a
 python3 -m http.server 8080
 ```
 
-Then open <http://localhost:8080>. Drag to orbit, scroll to zoom, right-drag to pan.
+Then open <http://localhost:8080>. Drag to orbit, scroll to zoom, right-drag to pan. After changing a file, hard-refresh (Ctrl+Shift+R) so the browser doesn't use a cached copy.
 
 ### Changing the design
 
-- **Directly:** edit `src/config.js` (all values in metres, commented; origin at the pool centre, +x downhill) and reload.
+- **Directly:** edit `src/config.js` (all values in metres, commented; origin at the pool centre, +x downhill, z along the pool as down the page on the drawing) and reload.
 - **Live:** use the "Pool design" sliders. "Copy settings" copies the current values in `config.js` format to paste back in.
 - **Export:** "Export .glb" downloads the model for Blender, SketchUp etc.
 
-The panel bottom-left shows the pool, deep-zone, shallow and planted areas, the water volume and the site fall.
+The panel bottom-left shows the pool, deep-zone, shallow and planted areas, the water volume and the site fall. Labels matching the drawing can be switched off under "Site".
+
+For debugging, the browser console has `window.pool` (`camera`, `controls`, `params`, `scene`).
 
 ### Files
 
+- `2d_top_view.svg` — the plan drawing (Inkscape)
 - `index.html` — page shell and library imports (Three.js 0.160, lil-gui 0.19 from jsDelivr)
 - `src/config.js` — design parameters
 - `src/main.js` — scene construction, GUI and stats

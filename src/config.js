@@ -38,8 +38,8 @@ export const config = {
   // the deep zone.
   seat: { width: 0.9, depth: 0.45 },
 
-  // Spillway: a step at the back of the seat whose top, like the wall behind it, is at
-  // water level (infinity edge), so water spills over into the drain.
+  // Spillway: a step at the back of the seat whose top, like the wall behind it, sits
+  // 2 cm below water level (infinity edge), so water spills over into the drain.
   spillway: { centre: -0.1, length: 4.2, width: 0.43 },
 
   // Drain channel outside the downhill wall, behind the spillway. The water collected
@@ -75,8 +75,8 @@ export const config = {
 
   planting: {
     reedsPerBed: 5,      // reed clumps in each planted bed
-    lilyPads: 14,        // in the open shallow areas
-    seed: 7,             // change to shuffle plant / stone placement
+    lilyPads: 14,        // in the open shallow water at the planted (+z) end
+    seed: 7,             // change to shuffle plant placement and the fountain rocks
   },
 
   showLabels: true,      // labels matching the drawing
