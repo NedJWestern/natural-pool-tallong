@@ -11,10 +11,10 @@ A parametric Three.js model of the pool: rectangular swim zone, shallow planted 
 The page uses ES modules, so it must be served over HTTP rather than opened as a file:
 
 ```sh
-python3 -m http.server 8000
+python3 -m http.server 8080
 ```
 
-Then open <http://localhost:8000>. Drag to orbit, scroll to zoom, right-drag to pan.
+Then open <http://localhost:8080>. Drag to orbit, scroll to zoom, right-drag to pan.
 
 ### Changing the design
 
