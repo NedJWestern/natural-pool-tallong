@@ -20,17 +20,25 @@ export const config = {
   deep: { from: -2.7, to: 2.4, depth: 1.8 },
 
   // Shallow zones fill each end of the pool beyond the deep zone.
-  shallow: { depth: 0.5 },
+  // The -z end is the children's entrance: kept clear of plants, with entry steps.
+  shallow: { depth: 0.5, entrySteps: true },
 
-  // Four planted beds, one in each corner of the shallow zones.
+  // Planted beds: one in each corner of the shallow zones, plus a strip along the
+  // far (+z) end wall between the corner beds.
   plantBeds: {
     width: 1.25,         // across (x), from the side wall inwards
     length: 2.85,        // along (z), from the end wall towards the deep zone
+    endStrip: 1.0,       // depth of the far-end strip (0 = none)
     topDepth: 0.2,       // bed surface below ground level (just under water)
   },
 
-  // Seat / spillway ledge on the downhill side wall, at water level.
-  spillway: { centre: -0.25, length: 4.2, width: 0.45 },
+  // Seat inside the downhill (+x) wall of the deep zone. Above it the wall is lowered
+  // to water level, so water spills over into the drain.
+  spillway: { centre: -0.1, length: 4.2, seatWidth: 0.45, seatDepth: 0.45 },
+
+  // Drain channel outside the downhill wall, along the deep zone. It empties through
+  // a pipe further down the bank.
+  drain: { width: 0.4, depth: 0.3 },
 
   // Timber dock on the uphill side wall, beside the deep zone.
   dock: { centre: 0.75, length: 3.4, depth: 2.15 },

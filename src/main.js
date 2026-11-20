@@ -135,11 +135,15 @@ function build(p) {
   const bedW = Math.min(p.plantBeds.width, W / 2 - 0.3);
   const bedTop = -Math.min(p.plantBeds.topDepth, sh - 0.05);
 
-  // Spillway ledge (downhill, +x side)
+  // Seat / spillway (downhill, +x side) and the drain outside it
   const spL = Math.min(p.spillway.length, dz1 - dz0);
   const spZ0 = Math.max(dz0, Math.min(dz1 - spL, p.spillway.centre - spL / 2));
   const spZ1 = spZ0 + spL;
-  const spX0 = hx - 0.1, spX1 = Math.max(hx + t, hx - 0.1 + p.spillway.width);
+  const seatW = Math.min(p.spillway.seatWidth, W / 2);
+  const seatTop = -Math.min(p.spillway.seatDepth, D - 0.2);
+  const drW = Math.max(0.15, p.drain.width), drD = Math.max(0.1, p.drain.depth);
+  const drX0 = hx + t, drX1 = hx + t + drW;
+  const drainWater = -drD + 0.07;
 
   // Dock and filter (uphill, -x side)
   const dock = { x0: -hx - p.dock.depth, x1: -hx + 0.06, z0: p.dock.centre - p.dock.length / 2, z1: p.dock.centre + p.dock.length / 2 };
@@ -149,7 +153,7 @@ function build(p) {
   // Natural ground falls towards +x. Around the pool, dock and filter it is levelled to a
   // terrace at y = 0, blending back to the natural slope (quickly on the downhill side).
   const terrace = {
-    x0: Math.min(dock.x0, filt.x0) - 1.2, x1: spX1,
+    x0: Math.min(dock.x0, filt.x0) - 1.2, x1: drX1,
     z0: -hz - t - 1.5, z1: hz + t + 1.5,
   };
   const natural = (x, z) => -p.site.slope * x + 0.07 * Math.sin(x * 0.31 + z * 0.17) + 0.05 * Math.sin(z * 0.43 - x * 0.12);
@@ -166,7 +170,7 @@ function build(p) {
     const pos = geo.attributes.position;
     // Pool opening: triangles entirely inside are dropped; inside vertices of the
     // triangles straddling the edge are snapped onto it.
-    const hole = { x0: -hx - t, x1: spX1, z0: -hz - t, z1: hz + t };
+    const hole = { x0: -hx - t, x1: drX1, z0: -hz - t, z1: hz + t };
     const inside = new Uint8Array(pos.count);
     for (let i = 0; i < pos.count; i++) {
       let x = pos.getX(i), z = pos.getZ(i);
@@ -192,6 +196,10 @@ function build(p) {
   add(boxBetween(-hx - t, -hx, -D, 0, -hz - t, hz + t, mat.wall));
   add(boxBetween(hx, hx + t, -D, 0, -hz - t, spZ0, mat.wall));
   add(boxBetween(hx, hx + t, -D, 0, spZ1, hz + t, mat.wall));
+  // Spillway: the wall is lowered to water level above the seat
+  add(boxBetween(hx, hx + t, -D, wl, spZ0, spZ1, mat.ledge));
+  // Seat along the inside of the downhill wall
+  add(boxBetween(hx - seatW, hx, -D, seatTop, spZ0, spZ1, mat.ledge));
   // End walls
   add(boxBetween(-hx, hx, -D, 0, -hz - t, -hz, mat.wall));
   add(boxBetween(-hx, hx, -D, 0, hz, hz + t, mat.wall));
@@ -210,47 +218,73 @@ function build(p) {
   for (const [x0, x1] of [[-hx, -hx + bedW], [hx - bedW, hx]]) {
     beds.push({ x0, x1, z0: -hz, z1: -hz + bedLen0 }, { x0, x1, z0: hz - bedLen1, z1: hz });
   }
+  if (p.plantBeds.endStrip > 0) {
+    const sd = Math.min(p.plantBeds.endStrip, hz - dz1 - 0.3);
+    beds.push({ x0: -hx + bedW, x1: hx - bedW, z0: hz - sd, z1: hz });
+  }
   for (const b of beds) add(boxBetween(b.x0, b.x1, -sh, bedTop, b.z0, b.z1, mat.soil));
 
-  // Coping stones around the top of the walls (not over the spillway ledge)
+  // Entry steps into the shallow entrance end (-z)
+  if (p.shallow.entrySteps) {
+    const sw = Math.min(1.6, W - 2 * bedW - 0.2), n = 2, tread = 0.32;
+    for (let i = 0; i < n; i++) {
+      const top = -sh * (i + 1) / (n + 1);
+      add(boxBetween(-sw / 2, sw / 2, -sh, top, -hz, -hz + tread * (n - i), mat.ledge));
+    }
+  }
+
+  // Coping stones around the top of the walls (not over the spillway).
+  // On the downhill side they also close off the ground beside the drain.
   const cy0 = -0.01, cy1 = 0.06, ov = 0.06, out = 0.12;
   add(boxBetween(-hx - t - out, -hx + ov, cy0, cy1, -hz - t - out, hz + t + out, mat.coping));
-  add(boxBetween(hx - ov, hx + t + out, cy0, cy1, -hz - t - out, spZ0, mat.coping));
-  add(boxBetween(hx - ov, hx + t + out, cy0, cy1, spZ1, hz + t + out, mat.coping));
+  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, -hz - t - out, dz0, mat.coping));
+  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, dz1, hz + t + out, mat.coping));
+  add(boxBetween(hx - ov, hx + t + 0.03, cy0, cy1, dz0, spZ0, mat.coping));
+  add(boxBetween(hx - ov, hx + t + 0.03, cy0, cy1, spZ1, dz1, mat.coping));
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, -hz - t - out, -hz + ov, mat.coping));
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, hz - ov, hz + t + out, mat.coping));
 
-  // Seat / spillway ledge: top at water level so water sheets over it and down the hill
-  add(boxBetween(spX0, spX1, -D, wl, spZ0, spZ1, mat.ledge));
+  // Drain channel: gravel floor, stone kerb on the outer side, a little water
+  add(boxBetween(drX0, drX1, -drD - 0.1, -drD, dz0, dz1, mat.gravel));
+  add(boxBetween(drX1 - 0.08, drX1 + out, -drD, cy1, dz0, dz1, mat.coping));
 
-  // Water surface (plus a thin film over the ledge)
-  const water = add(mesh(new THREE.PlaneGeometry(W, L), mat.water, { cast: false, receive: false }));
-  water.rotation.x = -Math.PI / 2;
-  water.position.set(0, wl, 0);
-  water.renderOrder = 10;
-  const film = add(mesh(new THREE.PlaneGeometry(spX1 - hx, spL), mat.water, { cast: false, receive: false }));
-  film.rotation.x = -Math.PI / 2;
-  film.position.set((hx + spX1) / 2, wl + 0.01, (spZ0 + spZ1) / 2);
-  film.renderOrder = 10;
-
-  // Cascade down the bank below the spillway
+  // Water surfaces: pool, drain, and the sheet falling over the spillway into the drain
+  const waterPlane = (w, l, x, y, z) => {
+    const m = add(mesh(new THREE.PlaneGeometry(w, l), mat.water, { cast: false, receive: false }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(x, y, z);
+    m.renderOrder = 10;
+  };
+  waterPlane(W, L, 0, wl, 0);
+  waterPlane(t, spL, hx + t / 2, wl + 0.008, (spZ0 + spZ1) / 2);
+  waterPlane(drW - 0.08, dz1 - dz0, (drX0 + drX1 - 0.08) / 2, drainWater, (dz0 + dz1) / 2);
   {
-    const xb = spX1 + 0.8;
-    const yb = heightAt(xb, (spZ0 + spZ1) / 2) + 0.03;
-    const v = [spX1, wl + 0.01, spZ0, spX1, wl + 0.01, spZ1, spX1 + 0.05, wl - 0.15, spZ1, spX1 + 0.05, wl - 0.15, spZ0,
-      xb, yb, spZ1, xb, yb, spZ0];
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
-    geo.setIndex([0, 1, 2, 0, 2, 3, 3, 2, 4, 3, 4, 5]);
-    geo.computeVertexNormals();
-    const c = add(mesh(geo, mat.cascade, { cast: false, receive: false }));
-    c.renderOrder = 11;
+    const sheet = add(mesh(new THREE.PlaneGeometry(spL, wl - drainWater), mat.cascade, { cast: false, receive: false }));
+    sheet.rotation.y = Math.PI / 2;
+    sheet.position.set(hx + t + 0.01, (wl + drainWater) / 2, (spZ0 + spZ1) / 2);
+    sheet.renderOrder = 11;
+  }
+
+  // Outlet pipe from the drain, emerging further down the bank
+  {
+    const zc = (dz0 + dz1) / 2;
+    let xo = drX1 + 0.6;
+    while (heightAt(xo, zc) > drainWater - 0.25 && xo < drX1 + 4) xo += 0.1; // until it clears the ground
+    const yp = -drD - 0.02;
+    const len = xo - drX0;
+    const pipe = add(mesh(new THREE.CylinderGeometry(0.06, 0.06, len, 12), mat.concrete));
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(drX0 + len / 2, yp, zc);
+    const yg = heightAt(xo + 0.1, zc);
+    const fall = add(mesh(new THREE.CylinderGeometry(0.04, 0.07, yp - yg, 10, 1, true), mat.cascade, { cast: false, receive: false }));
+    fall.position.set(xo + 0.05, (yp + yg) / 2, zc);
+    fall.renderOrder = 11;
     // Stones where the water lands
     const stoneGeo = new THREE.DodecahedronGeometry(1, 0);
-    for (let i = 0; i < 22; i++) {
-      const s = 0.12 + rnd() * 0.25;
-      const x = xb - 0.2 + rnd() * 1.2;
-      const z = spZ0 - 0.6 + rnd() * (spL + 1.2);
+    for (let i = 0; i < 14; i++) {
+      const s = 0.1 + rnd() * 0.22;
+      const x = xo - 0.2 + rnd() * 1.1;
+      const z = zc - 0.8 + rnd() * 1.6;
       const st = add(mesh(stoneGeo, pick(rnd, mat.stone)));
       st.scale.set(s * (1 + rnd() * 0.5), s * 0.55, s * (1 + rnd() * 0.5));
       st.position.set(x, heightAt(x, z) + s * 0.1, z);
@@ -316,13 +350,14 @@ function build(p) {
     }
   }
 
-  // Water lilies in the open shallow areas between the beds
+  // Water lilies in the open shallow area at the planted (+z) end; the entrance end stays clear
   const lilyGeo = new THREE.CircleGeometry(1, 24, 0.25, Math.PI * 2 - 0.5);
   lilyGeo.rotateX(-Math.PI / 2);
   const petalGeo = new THREE.SphereGeometry(0.07, 10, 6);
   const centreGeo = new THREE.SphereGeometry(0.025, 8, 6);
   const openX = hx - bedW - 0.25;
-  const ends = [[-hz + 0.3, dz0 - 0.3], [dz1 + 0.3, hz - 0.3]].filter(([a, b]) => b > a);
+  const stripD = p.plantBeds.endStrip > 0 ? beds[beds.length - 1].z1 - beds[beds.length - 1].z0 : 0;
+  const ends = [[dz1 + 0.3, hz - stripD - 0.3]].filter(([a, b]) => b > a);
   for (let i = 0; i < p.planting.lilyPads && ends.length && openX > 0; i++) {
     const [a, b] = ends[i % ends.length];
     const x = (rnd() * 2 - 1) * openX, z = a + rnd() * (b - a);
@@ -344,12 +379,12 @@ function build(p) {
     const grassGeo = new THREE.ConeGeometry(0.04, 1, 4);
     grassGeo.translate(0, 0.5, 0);
     const inRect = (x, z, r, m) => x > r.x0 - m && x < r.x1 + m && z > r.z0 - m && z < r.z1 + m;
-    const poolRect = { x0: -hx - t, x1: spX1, z0: -hz - t, z1: hz + t };
+    const poolRect = { x0: -hx - t, x1: drX1, z0: -hz - t, z1: hz + t };
     let placed = 0;
     for (let tries = 0; tries < 600 && placed < 26; tries++) {
       const x = -hx - 4 + rnd() * (W + 6), z = -hz - 2.5 + rnd() * (L + 5);
       if (inRect(x, z, poolRect, 0.4) || inRect(x, z, dock, 0.3) || inRect(x, z, filt, 0.3)) continue;
-      if (x > spX1 - 0.2 && z > spZ0 - 1 && z < spZ1 + 1) continue; // keep the view from the seat clear
+      if (x > drX1 - 0.2 && z > dz0 - 1 && z < dz1 + 1) continue; // keep the view from the seat clear
       if (!inRect(x, z, poolRect, 2.2)) continue;
       placed++;
       const m = pick(rnd, mat.grass);
@@ -382,10 +417,11 @@ function build(p) {
   if (p.showLabels) {
     add(
       label('deep', 0, wl + 0.05, (dz0 + dz1) / 2),
-      label('shallow', 0, wl + 0.05, (-hz + dz0) / 2),
+      label('shallow · entrance for kids', 0, wl + 0.05, (-hz + dz0) / 2),
       label('shallow', 0, wl + 0.05, (dz1 + hz) / 2),
       label('plants', (beds[0].x0 + beds[0].x1) / 2, 1.2, (beds[0].z0 + beds[0].z1) / 2),
-      label('seat / spillway', (spX0 + spX1) / 2, 0.25, (spZ0 + spZ1) / 2),
+      label('seat / spillway', hx - seatW / 2, 0.25, (spZ0 + spZ1) / 2),
+      label('drain', (drX0 + drX1) / 2, 0.25, dz1 - 0.6),
       label('dock', (dock.x0 + dock.x1) / 2, 0.45, (dock.z0 + dock.z1) / 2),
       label('filter', (filt.x0 + filt.x1) / 2, p.filter.height + 0.3, (filt.z0 + filt.z1) / 2),
     );
@@ -432,17 +468,22 @@ fp.add(params.deep, 'from', -8, 8, 0.05).name('deep zone from').onChange(rebuild
 fp.add(params.deep, 'to', -8, 8, 0.05).name('deep zone to').onChange(rebuild);
 fp.add(params.deep, 'depth', 1, 3, 0.05).name('deep depth').onChange(rebuild);
 fp.add(params.shallow, 'depth', 0.2, 1, 0.05).name('shallow depth').onChange(rebuild);
+fp.add(params.shallow, 'entrySteps').name('entry steps').onChange(rebuild);
 fp.add(params, 'waterLevel', -0.3, 0, 0.01).name('water level').onChange(rebuild);
 const fb = gui.addFolder('Planted beds');
 fb.add(params.plantBeds, 'width', 0.3, 3, 0.05).onChange(rebuild);
 fb.add(params.plantBeds, 'length', 0.3, 6, 0.05).onChange(rebuild);
+fb.add(params.plantBeds, 'endStrip', 0, 3, 0.05).name('end strip').onChange(rebuild);
 fb.add(params.plantBeds, 'topDepth', 0.05, 0.6, 0.01).name('top depth').onChange(rebuild);
 fb.add(params.planting, 'reedsPerBed', 0, 15, 1).name('reed clumps').onChange(rebuild);
 fb.add(params.planting, 'lilyPads', 0, 60, 1).name('lily pads').onChange(rebuild);
 const ff = gui.addFolder('Spillway, dock, filter');
 ff.add(params.spillway, 'centre', -6, 6, 0.05).name('spillway centre').onChange(rebuild);
 ff.add(params.spillway, 'length', 0.5, 10, 0.05).name('spillway length').onChange(rebuild);
-ff.add(params.spillway, 'width', 0.2, 1.2, 0.05).name('spillway width').onChange(rebuild);
+ff.add(params.spillway, 'seatWidth', 0.2, 1.2, 0.05).name('seat width').onChange(rebuild);
+ff.add(params.spillway, 'seatDepth', 0.2, 1.2, 0.05).name('seat depth').onChange(rebuild);
+ff.add(params.drain, 'width', 0.15, 1.2, 0.05).name('drain width').onChange(rebuild);
+ff.add(params.drain, 'depth', 0.1, 0.8, 0.05).name('drain depth').onChange(rebuild);
 ff.add(params.dock, 'centre', -6, 6, 0.05).name('dock centre').onChange(rebuild);
 ff.add(params.dock, 'length', 1, 8, 0.05).name('dock length').onChange(rebuild);
 ff.add(params.dock, 'depth', 0.5, 5, 0.05).name('dock depth').onChange(rebuild);

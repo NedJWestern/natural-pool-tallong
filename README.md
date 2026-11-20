@@ -7,9 +7,10 @@ Plans for a natural swimming pool in Talong
 A parametric Three.js model of the pool, translated from the plan drawing `2d_top_view.svg` (taken at 1 mm = 10 cm, so roughly 5.7 × 11.4 m):
 
 - a full-width **deep** swim zone in the middle, with **shallow** zones at each end
-- four **planted beds** in the corners of the shallow zones (reeds), lilies in the open shallow water
+- one shallow end is the **entrance for kids**: kept clear of plants, with entry steps
+- **planted beds** (reeds) in the four corners plus a strip along the far end wall; lilies in the open shallow water at that end
 - a timber **dock** with a ladder and a **filter** chamber on the uphill side
-- a **seat / spillway** ledge at water level on the downhill side, spilling down the bank
+- a **seat** inside the downhill wall; above it the wall is lowered as a **spillway** into a **drain** channel, which empties through a pipe down the bank
 - the site on a slight hill falling towards the spillway, levelled to a terrace around the pool
 - two trees, labels matching the drawing
 
