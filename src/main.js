@@ -63,7 +63,6 @@ const mat = {
   deck: [0x9c6b43, 0xa47249, 0x93633d].map(c => std(c, { roughness: 0.8 })),
   deckFrame: std(0x3d2f22, { roughness: 1 }),
   steel: std(0xc9ced1, { metalness: 0.9, roughness: 0.25 }),
-  stone: [0x8c8a85, 0x7a7670, 0x9a958c].map(c => std(c, { flatShading: true })),
   reed: [0x5f8a3a, 0x6f9840, 0x557c33].map(c => std(c, { roughness: 0.9 })),
   cattail: std(0x5a3a22, { roughness: 1 }),
   lily: std(0x3f7d36, { roughness: 0.6, side: THREE.DoubleSide }),
@@ -157,11 +156,15 @@ function build(p) {
     z0: -hz - t - 1.5, z1: hz + t + 1.5,
   };
   const natural = (x, z) => -p.site.slope * x + 0.07 * Math.sin(x * 0.31 + z * 0.17) + 0.05 * Math.sin(z * 0.43 - x * 0.12);
+  const lowEdge = wl - 0.06; // drain kerb and downhill ground start here
   const heightAt = (x, z) => {
     const ux = Math.max(0, terrace.x0 - x) / 3.0;
     const dx = Math.max(0, x - terrace.x1) / 0.7;
     const zz = Math.max(0, terrace.z0 - z, z - terrace.z1) / 3.0;
-    return natural(x, z) * smoothstep(Math.hypot(ux, dx, zz));
+    // Downhill of the drain the ground starts below the spillway lip, so nothing
+    // rises above the water's edge in the view (infinity-edge effect).
+    const base = x >= terrace.x1 - 1e-6 ? lowEdge : 0;
+    return base + (natural(x, z) - base) * smoothstep(Math.hypot(ux, dx, zz));
   };
   {
     const size = 64, seg = 256;
@@ -244,9 +247,9 @@ function build(p) {
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, -hz - t - out, -hz + ov, mat.coping));
   add(boxBetween(-hx + ov, hx - ov, cy0, cy1, hz - ov, hz + t + out, mat.coping));
 
-  // Drain channel: gravel floor, stone kerb on the outer side, a little water
+  // Drain channel: gravel floor, low stone kerb on the outer side, a little water
   add(boxBetween(drX0, drX1, -drD - 0.1, -drD, dz0, dz1, mat.gravel));
-  add(boxBetween(drX1 - 0.08, drX1 + out, -drD, cy1, dz0, dz1, mat.coping));
+  add(boxBetween(drX1 - 0.08, drX1 + 0.02, -drD, lowEdge, dz0, dz1, mat.coping)); // kerb below the lip
 
   // Water surfaces: pool, drain, and the sheet falling over the spillway into the drain
   const waterPlane = (w, l, x, y, z) => {
@@ -279,17 +282,6 @@ function build(p) {
     const fall = add(mesh(new THREE.CylinderGeometry(0.04, 0.07, yp - yg, 10, 1, true), mat.cascade, { cast: false, receive: false }));
     fall.position.set(xo + 0.05, (yp + yg) / 2, zc);
     fall.renderOrder = 11;
-    // Stones where the water lands
-    const stoneGeo = new THREE.DodecahedronGeometry(1, 0);
-    for (let i = 0; i < 14; i++) {
-      const s = 0.1 + rnd() * 0.22;
-      const x = xo - 0.2 + rnd() * 1.1;
-      const z = zc - 0.8 + rnd() * 1.6;
-      const st = add(mesh(stoneGeo, pick(rnd, mat.stone)));
-      st.scale.set(s * (1 + rnd() * 0.5), s * 0.55, s * (1 + rnd() * 0.5));
-      st.position.set(x, heightAt(x, z) + s * 0.1, z);
-      st.rotation.set(rnd() * 0.4, rnd() * Math.PI, rnd() * 0.4);
-    }
   }
 
   // ---- dock ----
