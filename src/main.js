@@ -28,7 +28,7 @@ scene.fog = new THREE.Fog(0xbfd9ea, 40, 100);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 300);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+controls.enableDamping = false; // stop as soon as the mouse is released
 controls.maxPolarAngle = Math.PI * 0.495;
 
 scene.add(new THREE.HemisphereLight(0xdfefff, 0x5a6b3a, 0.9));
