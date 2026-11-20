@@ -51,7 +51,6 @@ const mat = {
   coping: std(0xb3ada2, { side: THREE.DoubleSide }),
   ledge: std(0x9d978c, { side: THREE.DoubleSide }),
   concrete: std(0x8a8a86),
-  lid: std(0x5c5f60, { roughness: 0.7 }),
   water: new THREE.MeshPhysicalMaterial({
     color: 0x2c6e70, transparent: true, opacity: 0.55, roughness: 0.06,
     clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
@@ -399,9 +398,11 @@ function build(p) {
     for (let y = -1.1; y < -0.05; y += 0.3) add(boxBetween(rx - 0.025, rx + 0.065, y, y + 0.025, lz - 0.25, lz + 0.25, mat.steel));
   }
 
-  // ---- filter chamber ----
-  add(boxBetween(filt.x0, filt.x1, -0.3, p.filter.height, filt.z0, filt.z1, mat.concrete));
-  add(boxBetween(filt.x0 + 0.12, filt.x1 - 0.12, p.filter.height, p.filter.height + 0.03, filt.z0 + 0.12, filt.z1 - 0.12, mat.lid));
+  // ---- filter: an open reed bed in a concrete-edged basin (planted further down) ----
+  const filtWall = 0.12, filtFill = p.filter.height - 0.06; // gravel sits just below the rim
+  add(extrudeXZ(rectLoop(filt.x0, filt.x1, filt.z0, filt.z1),
+    [rectLoop(filt.x0 + filtWall, filt.x1 - filtWall, filt.z0 + filtWall, filt.z1 - filtWall)], -0.3, p.filter.height, mat.concrete));
+  add(boxBetween(filt.x0 + filtWall, filt.x1 - filtWall, -0.3, filtFill, filt.z0 + filtWall, filt.z1 - filtWall, mat.gravel));
   // Pipe from the filter into the pool
   {
     const pipe = add(mesh(new THREE.CylinderGeometry(0.05, 0.05, t + 0.3, 12), mat.concrete));
@@ -415,6 +416,34 @@ function build(p) {
   const headGeo = new THREE.CapsuleGeometry(0.028, 0.16, 3, 8);
   const fnt = p.fountain;
   const nearFountain = (x, z, m) => fnt.enabled && Math.hypot(x - fnt.x, z - fnt.z) < fnt.size / 2 + m;
+  const reedClump = (cx, cz, baseY, spread = 0.3) => {
+    const n = 8 + Math.floor(rnd() * 12);
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * spread;
+      const h = 0.9 + rnd() * 0.8;
+      const s = add(mesh(stemGeo, pick(rnd, mat.reed), { receive: false }));
+      s.scale.set(1, h, 1);
+      s.position.set(cx + Math.cos(a) * r, baseY, cz + Math.sin(a) * r);
+      s.rotation.set((rnd() - 0.5) * 0.25, 0, (rnd() - 0.5) * 0.25);
+      if (rnd() < 0.3) {
+        const head = mesh(headGeo, mat.cattail, { receive: false });
+        head.position.set(0, 0.85, 0);
+        head.scale.set(1, 1 / h, 1);
+        s.add(head);
+      }
+    }
+  };
+  // Reed-bed filter: clumps on a jittered grid so the whole basin is filled
+  {
+    const ix0 = filt.x0 + filtWall + 0.2, ix1 = filt.x1 - filtWall - 0.2;
+    const iz0 = filt.z0 + filtWall + 0.2, iz1 = filt.z1 - filtWall - 0.2;
+    const step = Math.max(0.3, p.filter.reedSpacing);
+    for (let x = ix0; x <= ix1 + 1e-6; x += step) {
+      for (let z = iz0; z <= iz1 + 1e-6; z += step) {
+        reedClump(x + (rnd() - 0.5) * step * 0.4, z + (rnd() - 0.5) * step * 0.4, filtFill, step * 0.55);
+      }
+    }
+  }
   for (const b of beds) {
     for (let c = 0; c < p.planting.reedsPerBed; c++) {
       let cx, cz, tries = 0;
@@ -423,21 +452,7 @@ function build(p) {
         cz = b.z0 + 0.25 + rnd() * (b.z1 - b.z0 - 0.5);
       } while ((nearFountain(cx, cz, 0.35) || !pointInPoly({ x: cx, z: cz }, b.poly)) && ++tries < 20);
       if (tries >= 20) continue;
-      const n = 8 + Math.floor(rnd() * 12);
-      for (let i = 0; i < n; i++) {
-        const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.3;
-        const h = 0.9 + rnd() * 0.8;
-        const s = add(mesh(stemGeo, pick(rnd, mat.reed), { receive: false }));
-        s.scale.set(1, h, 1);
-        s.position.set(cx + Math.cos(a) * r, bedTop, cz + Math.sin(a) * r);
-        s.rotation.set((rnd() - 0.5) * 0.25, 0, (rnd() - 0.5) * 0.25);
-        if (rnd() < 0.3) {
-          const head = mesh(headGeo, mat.cattail, { receive: false });
-          head.position.set(0, 0.85, 0);
-          head.scale.set(1, 1 / h, 1);
-          s.add(head);
-        }
-      }
+      reedClump(cx, cz, bedTop);
     }
   }
 
@@ -597,7 +612,7 @@ function build(p) {
       label('drain', (drX0 + drX1) / 2, 0.25, dz1 - 0.6),
       ...(fnt.enabled ? [label('rock fountain', fnt.x, wl + fnt.height + 0.4, fnt.z)] : []),
       label('dock', (dock.x0 + dock.x1) / 2, 0.45, (dock.z0 + dock.z1) / 2),
-      label('filter', (filt.x0 + filt.x1) / 2, p.filter.height + 0.3, (filt.z0 + filt.z1) / 2),
+      label('filter (reed bed)', (filt.x0 + filt.x1) / 2, p.filter.height + 1.9, (filt.z0 + filt.z1) / 2),
     );
     for (const tr of p.trees) add(label('tree', tr.x, heightAt(tr.x, tr.z) + 4.5, tr.z));
   }

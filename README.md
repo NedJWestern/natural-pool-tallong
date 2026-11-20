@@ -23,7 +23,7 @@ Along its length the pool runs: **kids' entrance (shallow)** → **deep zone** �
 | Spillway | 4.2 × 0.43 m step at the back of the seat | top 2 cm below water level, as is the wall behind it | infinity edge: water spills over into the drain; somewhere to rest your arms while looking out |
 | Drain | 0.4 m wide, behind the spillway (4.2 m) | 0.3 m deep | outer kerb and the ground beyond sit below the spillway lip, so nothing rises above the water in the view |
 | Dock | 3.4 × 2.15 m timber deck | 0.18 m above ground | uphill side, beside the deep zone, with a ladder into it |
-| Filter | 2.8 × 2.15 m chamber | 0.35 m above ground | uphill side, next to the dock |
+| Filter | 2.8 × 2.15 m reed bed | concrete-edged basin, 0.35 m above ground | uphill side, next to the dock; planted densely with reeds over gravel |
 | Rock fountain | ~1.4 m across | ~0.8 m above water | small ornamental stack of rocks in the middle of the far-end planted strip; water bubbles from the top and trickles down into the pool |
 | Border planting | band ~1.8 m wide around the outside of the pool | grasses and irises ~0.5–1 m, shrubs further back | softens the stone edge and screens the filter; kept off the downhill side (the view), the dock, the filter, the path to the dock and the kids' entrance |
 | Trees | two, ~2.6 m canopy | — | uphill, as on the drawing |
@@ -32,7 +32,7 @@ Other figures: the water level is 8 cm below ground (set by the spillway lip), t
 
 ### Water circulation
 
-Water spills over the infinity-edge spillway into the drain. From there it is pumped back to the filter, which returns it into the pool. The pump and the underground pipework are not modelled.
+Water spills over the infinity-edge spillway into the drain. From there it is pumped back to the filter, a reed bed, which returns it into the pool. The pump and the underground pipework are not modelled.
 
 ### Open points
 
@@ -48,7 +48,7 @@ A parametric Three.js model of the pool, translated from the plan drawing `2d_to
 - a full-width **deep** swim zone in the middle, with **shallow** zones at each end
 - one shallow end is the **entrance for kids**: kept clear of plants, with entry steps
 - **planted beds** (reeds) in the four corners plus a strip along the far end wall; lilies in the open shallow water at that end
-- a timber **dock** with a ladder and a **filter** chamber on the uphill side
+- a timber **dock** with a ladder and a reed-bed **filter** on the uphill side
 - an underwater **seat** along the downhill wall of the deep zone, with an infinity-edge **spillway** step at its back spilling into a **drain** channel (kerb and ground beyond kept below the lip, so nothing rises above the water in the view), from which water is pumped back to the filter
 - the site on a slight hill falling towards the spillway, levelled to a terrace around the pool
 - a small **rock fountain** in the far-end planted strip

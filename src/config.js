@@ -49,8 +49,9 @@ export const config = {
   // Timber dock on the uphill side wall, beside the deep zone.
   dock: { centre: 0.75, length: 3.4, depth: 2.15 },
 
-  // Filter chamber on the uphill side, next to the dock.
-  filter: { centre: -2.5, length: 2.8, depth: 2.15, height: 0.35 },
+  // Filter on the uphill side, next to the dock: a raised, concrete-edged reed bed
+  // that the spillway water is pumped through before returning to the pool.
+  filter: { centre: -2.5, length: 2.8, depth: 2.15, height: 0.35, reedSpacing: 0.45 },
 
   // Small ornamental rock fountain in the far-end planted strip (absolute position).
   fountain: { enabled: true, x: -0.05, z: 5.0, size: 1.4, height: 0.8 },
