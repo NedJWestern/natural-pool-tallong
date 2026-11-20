@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import GUI from 'lil-gui';
 import { config } from './config.js';
 
@@ -16,9 +17,14 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+Object.assign(labelRenderer.domElement.style, { position: 'fixed', top: '0', left: '0', pointerEvents: 'none' });
+document.body.appendChild(labelRenderer.domElement);
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xbfd9ea);
-scene.fog = new THREE.Fog(0xbfd9ea, 45, 110);
+scene.fog = new THREE.Fog(0xbfd9ea, 40, 100);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.05, 300);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -27,36 +33,45 @@ controls.maxPolarAngle = Math.PI * 0.495;
 
 scene.add(new THREE.HemisphereLight(0xdfefff, 0x5a6b3a, 0.9));
 const sun = new THREE.DirectionalLight(0xfff3dd, 2.2);
-sun.position.set(-12, 20, 10);
+sun.position.set(-8, 20, 9);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 70 });
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 60 });
 sun.shadow.bias = -0.0005;
 scene.add(sun, sun.target);
 
 // ---------- materials ----------
+const std = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.95, ...extra });
 const mat = {
-  lawn: new THREE.MeshStandardMaterial({ color: 0x6f9a45, roughness: 1 }),
-  bank: new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 1, side: THREE.DoubleSide }),
-  gravel: new THREE.MeshStandardMaterial({ color: 0xa08d6a, roughness: 1 }),
-  swimFloor: new THREE.MeshStandardMaterial({ color: 0x3e4a48, roughness: 0.9 }),
-  swimWall: new THREE.MeshStandardMaterial({ color: 0x55605d, roughness: 0.85 }),
+  lawn: std(0x6f9a45, { roughness: 1 }),
+  gravel: std(0xa08d6a, { roughness: 1 }),
+  soil: std(0x6b5a40, { roughness: 1 }),
+  swimFloor: std(0x3e4a48, { roughness: 0.9 }),
+  wall: std(0x55605d, { roughness: 0.85 }),
+  coping: std(0xb3ada2),
+  ledge: std(0x9d978c),
+  concrete: std(0x8a8a86),
+  lid: std(0x5c5f60, { roughness: 0.7 }),
   water: new THREE.MeshPhysicalMaterial({
     color: 0x2c6e70, transparent: true, opacity: 0.55, roughness: 0.06,
-    metalness: 0, clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
+    clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
   }),
-  deck: [0x9c6b43, 0xa47249, 0x93633d].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8 })),
-  deckFrame: new THREE.MeshStandardMaterial({ color: 0x3d2f22, roughness: 1 }),
-  steel: new THREE.MeshStandardMaterial({ color: 0xc9ced1, metalness: 0.9, roughness: 0.25 }),
-  stone: [0x8c8a85, 0x7a7670, 0x9a958c].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, flatShading: true })),
-  reed: [0x5f8a3a, 0x6f9840, 0x557c33].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 })),
-  cattail: new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 1 }),
-  lily: new THREE.MeshStandardMaterial({ color: 0x3f7d36, roughness: 0.6, side: THREE.DoubleSide }),
-  flower: new THREE.MeshStandardMaterial({ color: 0xf2a6c2, roughness: 0.7 }),
-  flowerCentre: new THREE.MeshStandardMaterial({ color: 0xf5d142, roughness: 0.7 }),
-  grass: [0x7fa04a, 0x92a85a, 0x6c8f3d].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true })),
-  trunk: new THREE.MeshStandardMaterial({ color: 0x5b4432, roughness: 1 }),
-  foliage: [0x4c7a35, 0x5a8a3c, 0x3f6b2f].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true })),
+  cascade: new THREE.MeshPhysicalMaterial({
+    color: 0xcfe6ea, transparent: true, opacity: 0.6, roughness: 0.1,
+    clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
+  }),
+  deck: [0x9c6b43, 0xa47249, 0x93633d].map(c => std(c, { roughness: 0.8 })),
+  deckFrame: std(0x3d2f22, { roughness: 1 }),
+  steel: std(0xc9ced1, { metalness: 0.9, roughness: 0.25 }),
+  stone: [0x8c8a85, 0x7a7670, 0x9a958c].map(c => std(c, { flatShading: true })),
+  reed: [0x5f8a3a, 0x6f9840, 0x557c33].map(c => std(c, { roughness: 0.9 })),
+  cattail: std(0x5a3a22, { roughness: 1 }),
+  lily: std(0x3f7d36, { roughness: 0.6, side: THREE.DoubleSide }),
+  flower: std(0xf2a6c2, { roughness: 0.7 }),
+  flowerCentre: std(0xf5d142, { roughness: 0.7 }),
+  grass: [0x7fa04a, 0x92a85a, 0x6c8f3d].map(c => std(c, { roughness: 1, flatShading: true })),
+  trunk: std(0x5b4432, { roughness: 1 }),
+  foliage: [0x4c7a35, 0x5a8a3c, 0x3f6b2f].map(c => std(c, { roughness: 1, flatShading: true })),
 };
 
 // ---------- helpers ----------
@@ -69,59 +84,7 @@ function mulberry32(seed) {
   };
 }
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
-
-// Horizontal shape geometry from (x, z) points, placed at height y.
-function flatShape(outer, holes, y) {
-  const shape = new THREE.Shape(outer.map(p => new THREE.Vector2(p.x, -p.z)));
-  for (const h of holes) shape.holes.push(new THREE.Path(h.map(p => new THREE.Vector2(p.x, -p.z))));
-  const g = new THREE.ShapeGeometry(shape, 1);
-  g.rotateX(-Math.PI / 2);
-  g.translate(0, y, 0);
-  return g;
-}
-
-// Vertical strip following a closed path of (x, z) points, from yTop down to yBottom.
-function wallStrip(points, yTop, yBottom) {
-  const pos = [];
-  for (let i = 0; i < points.length; i++) {
-    const a = points[i], b = points[(i + 1) % points.length];
-    pos.push(a.x, yTop, a.z, b.x, yTop, b.z, a.x, yBottom, a.z);
-    pos.push(b.x, yTop, b.z, b.x, yBottom, b.z, a.x, yBottom, a.z);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.computeVertexNormals();
-  return g;
-}
-
-function pointInPolygon(p, poly) {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i], b = poly[j];
-    if ((a.z > p.z) !== (b.z > p.z) && p.x < ((b.x - a.x) * (p.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
-  }
-  return inside;
-}
-
-function distToPolygon(p, poly) {
-  let d = Infinity;
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
-    const dx = b.x - a.x, dz = b.z - a.z;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
-    d = Math.min(d, Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz)));
-  }
-  return d;
-}
-
-function polygonArea(poly) {
-  let s = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i], b = poly[(i + 1) % poly.length];
-    s += a.x * b.z - b.x * a.z;
-  }
-  return Math.abs(s) / 2;
-}
+const smoothstep = (t) => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
 
 const mesh = (geo, material, { cast = true, receive = true } = {}) => {
   const m = new THREE.Mesh(geo, material);
@@ -129,24 +92,20 @@ const mesh = (geo, material, { cast = true, receive = true } = {}) => {
   return m;
 };
 
-// ---------- pond outline ----------
-// Straight edge at the deck end, organic curve around the regeneration zone.
-function buildOutline(p) {
-  const { length: L, width: W, wallThickness: t } = p.swim;
-  const R = Math.max(0.8, p.regen.endLength);
-  const S = Math.max(0.8, p.regen.sideWidth);
-  const rnd = mulberry32(p.planting.seed + 101);
-  const out = () => rnd() * p.regen.wobble; // only pushes outward, so zones never get narrower than set
-  const x0 = -t - 0.25;
-  const hw = W / 2 + t;
-  const ctrl = [
-    [x0, -(hw + S * 0.55)], [x0, -hw / 2], [x0, 0], [x0, hw / 2], [x0, hw + S * 0.55],
-    [L * 0.25, hw + S + out()], [L * 0.6, hw + S + 0.1 + out()], [L + R * 0.45, hw + S * 0.9 + out()],
-    [L + R + out(), hw * 0.4], [L + R + 0.1 + out(), -hw * 0.4],
-    [L + R * 0.5, -(hw + S * 0.9 + out())], [L * 0.55, -(hw + S + 0.1 + out())], [L * 0.2, -(hw + S + out())],
-  ].map(([x, z]) => new THREE.Vector3(x, 0, z));
-  const curve = new THREE.CatmullRomCurve3(ctrl, true, 'centripetal');
-  return curve.getSpacedPoints(260).slice(0, -1).map(v => ({ x: v.x, z: v.z }));
+// Axis-aligned box from min/max extents.
+function boxBetween(x0, x1, y0, y1, z0, z1, material, opts) {
+  const b = mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), material, opts);
+  b.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  return b;
+}
+
+function label(text, x, y, z) {
+  const el = document.createElement('div');
+  el.className = 'label';
+  el.textContent = text;
+  const o = new CSS2DObject(el);
+  o.position.set(x, y, z);
+  return o;
 }
 
 // ---------- scene construction ----------
@@ -155,278 +114,345 @@ let poolGroup = null;
 function build(p) {
   if (poolGroup) {
     scene.remove(poolGroup);
-    poolGroup.traverse(o => o.geometry && o.geometry.dispose());
+    poolGroup.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.isCSS2DObject) o.element.remove();
+    });
   }
   const g = new THREE.Group();
   g.name = 'NaturalPool';
   poolGroup = g;
-
-  const { length: L, width: W, depth: D, wallThickness: t, wallTopDepth } = p.swim;
-  const rDepth = Math.min(p.regen.depth, D - 0.1);
-  const wl = p.waterLevel;
-  const outline = buildOutline(p);
+  const add = (...objs) => { g.add(...objs); return objs[0]; };
   const rnd = mulberry32(p.planting.seed);
 
-  // Bounding box / centre of the whole pond
-  const xs = outline.map(q => q.x), zs = outline.map(q => q.z);
-  const bb = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
-  const centre = new THREE.Vector3((bb.minX + bb.maxX) / 2, 0, (bb.minZ + bb.maxZ) / 2);
-  const span = Math.max(bb.maxX - bb.minX, bb.maxZ - bb.minZ);
+  const W = p.pool.width, L = p.pool.length, t = p.pool.wallThickness;
+  const hx = W / 2, hz = L / 2;
+  const D = p.deep.depth;
+  const dz0 = Math.max(-hz + 0.5, Math.min(p.deep.from, p.deep.to - 1));
+  const dz1 = Math.min(hz - 0.5, Math.max(p.deep.to, dz0 + 1));
+  const sh = Math.min(p.shallow.depth, D - 0.2);
+  const wl = p.waterLevel;
+  const bedW = Math.min(p.plantBeds.width, W / 2 - 0.3);
+  const bedTop = -Math.min(p.plantBeds.topDepth, sh - 0.05);
 
-  // Swim zone outer footprint (including walls)
-  const swimOuter = [
-    { x: -t, z: -W / 2 - t }, { x: L + t, z: -W / 2 - t }, { x: L + t, z: W / 2 + t }, { x: -t, z: W / 2 + t },
-  ];
-  const inSwimZone = (q, pad = 0) => q.x > -t - pad && q.x < L + t + pad && Math.abs(q.z) < W / 2 + t + pad;
+  // Spillway ledge (downhill, +x side)
+  const spL = Math.min(p.spillway.length, dz1 - dz0);
+  const spZ0 = Math.max(dz0, Math.min(dz1 - spL, p.spillway.centre - spL / 2));
+  const spZ1 = spZ0 + spL;
+  const spX0 = hx - 0.1, spX1 = Math.max(hx + t, hx - 0.1 + p.spillway.width);
 
-  // Lawn with the pond cut out
-  const G = 70;
-  const groundRect = [
-    { x: centre.x - G, z: centre.z - G }, { x: centre.x + G, z: centre.z - G },
-    { x: centre.x + G, z: centre.z + G }, { x: centre.x - G, z: centre.z + G },
-  ];
-  g.add(mesh(flatShape(groundRect, [outline], 0), mat.lawn, { cast: false }));
+  // Dock and filter (uphill, -x side)
+  const dock = { x0: -hx - p.dock.depth, x1: -hx + 0.06, z0: p.dock.centre - p.dock.length / 2, z1: p.dock.centre + p.dock.length / 2 };
+  const filt = { x0: -hx - t - p.filter.depth, x1: -hx - t, z0: p.filter.centre - p.filter.length / 2, z1: p.filter.centre + p.filter.length / 2 };
 
-  // Regeneration zone: banks and gravel floor
-  g.add(mesh(wallStrip(outline, 0, -rDepth), mat.bank, { cast: false }));
-  g.add(mesh(flatShape(outline, [swimOuter], -rDepth), mat.gravel, { cast: false }));
-
-  // Swim zone: floor and walls
-  const floor = mesh(new THREE.PlaneGeometry(L, W), mat.swimFloor, { cast: false });
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(L / 2, -D, 0);
-  g.add(floor);
-
-  const wallTop = -wallTopDepth;
-  const wallH = D - wallTopDepth;
-  const addBox = (sx, sy, sz, x, y, z, m) => {
-    const b = mesh(new THREE.BoxGeometry(sx, sy, sz), m);
-    b.position.set(x, y, z);
-    g.add(b);
-    return b;
+  // ---- terrain ----
+  // Natural ground falls towards +x. Around the pool, dock and filter it is levelled to a
+  // terrace at y = 0, blending back to the natural slope (quickly on the downhill side).
+  const terrace = {
+    x0: Math.min(dock.x0, filt.x0) - 1.2, x1: spX1,
+    z0: -hz - t - 1.5, z1: hz + t + 1.5,
   };
-  // Long side walls and far end wall are submerged so water flows over from the regeneration zone
-  addBox(L + 2 * t, wallH, t, L / 2, -D + wallH / 2, W / 2 + t / 2, mat.swimWall);
-  addBox(L + 2 * t, wallH, t, L / 2, -D + wallH / 2, -W / 2 - t / 2, mat.swimWall);
-  addBox(t, wallH, W, L + t / 2, -D + wallH / 2, 0, mat.swimWall);
-  // Deck-end wall rises to ground level
-  addBox(t, D, W + 2 * t, -t / 2, -D / 2, 0, mat.swimWall);
-  // Gravel infill between the swim walls and the regen floor
-  g.add(mesh(wallStrip(swimOuter, -rDepth, -D), mat.bank, { cast: false }));
-
-  // Water surface
-  const water = mesh(flatShape(outline, [], wl), mat.water, { cast: false, receive: false });
-  water.renderOrder = 10;
-  g.add(water);
-
-  // Deck
-  if (p.deck.enabled) {
-    const dw = W + 2 * p.deck.extraWidth;
-    const deckTop = 0.15;
-    const boardW = 0.14, gap = 0.008;
-    const x1 = -p.deck.depth, x2 = 0.06;
-    for (let x = x1; x + boardW <= x2 + 1e-6; x += boardW + gap) {
-      addBox(boardW, 0.03, dw, x + boardW / 2, deckTop - 0.015, 0, pick(rnd, mat.deck));
-    }
-    addBox(x2 - x1, deckTop - 0.03, dw - 0.1, (x1 + x2) / 2 - 0.05, (deckTop - 0.03) / 2, 0, mat.deckFrame);
-  }
-
-  // Ladder into the swim zone from the deck end
+  const natural = (x, z) => -p.site.slope * x + 0.07 * Math.sin(x * 0.31 + z * 0.17) + 0.05 * Math.sin(z * 0.43 - x * 0.12);
+  const heightAt = (x, z) => {
+    const ux = Math.max(0, terrace.x0 - x) / 3.0;
+    const dx = Math.max(0, x - terrace.x1) / 0.7;
+    const zz = Math.max(0, terrace.z0 - z, z - terrace.z1) / 3.0;
+    return natural(x, z) * smoothstep(Math.hypot(ux, dx, zz));
+  };
   {
-    const top = p.deck.enabled ? 0.15 : 0;
-    const lz = W / 2 - 0.9;
-    const rx = 0.2;
-    for (const dz of [-0.25, 0.25]) {
-      const path = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(rx, -1.3, lz + dz), new THREE.Vector3(rx, top + 0.55, lz + dz),
-        new THREE.Vector3(rx - 0.12, top + 0.82, lz + dz), new THREE.Vector3(-0.3, top + 0.82, lz + dz),
-        new THREE.Vector3(-0.42, top + 0.6, lz + dz), new THREE.Vector3(-0.42, top, lz + dz),
-      ], false, 'centripetal', 0.3);
-      g.add(mesh(new THREE.TubeGeometry(path, 60, 0.022, 10), mat.steel));
+    const size = 64, seg = 256;
+    const geo = new THREE.PlaneGeometry(size, size, seg, seg);
+    geo.rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position;
+    // Pool opening: triangles entirely inside are dropped; inside vertices of the
+    // triangles straddling the edge are snapped onto it.
+    const hole = { x0: -hx - t, x1: spX1, z0: -hz - t, z1: hz + t };
+    const inside = new Uint8Array(pos.count);
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i), z = pos.getZ(i);
+      if (x > hole.x0 && x < hole.x1 && z > hole.z0 && z < hole.z1) {
+        inside[i] = 1;
+        const d = [x - hole.x0, hole.x1 - x, z - hole.z0, hole.z1 - z];
+        const m = d.indexOf(Math.min(...d));
+        if (m === 0) x = hole.x0; else if (m === 1) x = hole.x1; else if (m === 2) z = hole.z0; else z = hole.z1;
+      }
+      pos.setXYZ(i, x, heightAt(x, z), z);
     }
-    for (let y = -1.1; y < -0.05; y += 0.3) addBox(0.09, 0.025, 0.5, rx + 0.02, y, lz, mat.steel);
+    const idx = geo.index.array, kept = [];
+    for (let i = 0; i < idx.length; i += 3) {
+      if (!(inside[idx[i]] && inside[idx[i + 1]] && inside[idx[i + 2]])) kept.push(idx[i], idx[i + 1], idx[i + 2]);
+    }
+    geo.setIndex(kept);
+    geo.computeVertexNormals();
+    add(mesh(geo, mat.lawn, { cast: false }));
   }
 
-  // Valid planting spot in the regeneration zone
-  const regenSpot = (pad) => {
-    for (let i = 0; i < 400; i++) {
-      const q = { x: bb.minX + rnd() * (bb.maxX - bb.minX), z: bb.minZ + rnd() * (bb.maxZ - bb.minZ) };
-      if (q.x < 0.8) continue; // keep clear of the deck end
-      if (!pointInPolygon(q, outline) || inSwimZone(q, 0.35)) continue;
-      if (distToPolygon(q, outline) < pad) continue;
-      return q;
-    }
-    return null;
-  };
+  // ---- pool structure ----
+  // Side walls (run the full length, including corners)
+  add(boxBetween(-hx - t, -hx, -D, 0, -hz - t, hz + t, mat.wall));
+  add(boxBetween(hx, hx + t, -D, 0, -hz - t, spZ0, mat.wall));
+  add(boxBetween(hx, hx + t, -D, 0, spZ1, hz + t, mat.wall));
+  // End walls
+  add(boxBetween(-hx, hx, -D, 0, -hz - t, -hz, mat.wall));
+  add(boxBetween(-hx, hx, -D, 0, hz, hz + t, mat.wall));
+  // Deep zone floor
+  const floor = add(mesh(new THREE.PlaneGeometry(W, dz1 - dz0), mat.swimFloor, { cast: false }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, -D, (dz0 + dz1) / 2);
+  // Shallow ends: solid fill with a gravel top; the side faces form the steps down to the deep zone
+  const fillMats = [mat.wall, mat.wall, mat.gravel, mat.wall, mat.wall, mat.wall];
+  add(boxBetween(-hx, hx, -D, -sh, -hz, dz0, fillMats));
+  add(boxBetween(-hx, hx, -D, -sh, dz1, hz, fillMats));
+  // Planted beds in the four corners
+  const beds = [];
+  const bedLen0 = Math.min(p.plantBeds.length, dz0 + hz - 0.05);
+  const bedLen1 = Math.min(p.plantBeds.length, hz - dz1 - 0.05);
+  for (const [x0, x1] of [[-hx, -hx + bedW], [hx - bedW, hx]]) {
+    beds.push({ x0, x1, z0: -hz, z1: -hz + bedLen0 }, { x0, x1, z0: hz - bedLen1, z1: hz });
+  }
+  for (const b of beds) add(boxBetween(b.x0, b.x1, -sh, bedTop, b.z0, b.z1, mat.soil));
 
-  // Reeds (with some bulrush heads)
+  // Coping stones around the top of the walls (not over the spillway ledge)
+  const cy0 = -0.01, cy1 = 0.06, ov = 0.06, out = 0.12;
+  add(boxBetween(-hx - t - out, -hx + ov, cy0, cy1, -hz - t - out, hz + t + out, mat.coping));
+  add(boxBetween(hx - ov, hx + t + out, cy0, cy1, -hz - t - out, spZ0, mat.coping));
+  add(boxBetween(hx - ov, hx + t + out, cy0, cy1, spZ1, hz + t + out, mat.coping));
+  add(boxBetween(-hx + ov, hx - ov, cy0, cy1, -hz - t - out, -hz + ov, mat.coping));
+  add(boxBetween(-hx + ov, hx - ov, cy0, cy1, hz - ov, hz + t + out, mat.coping));
+
+  // Seat / spillway ledge: top at water level so water sheets over it and down the hill
+  add(boxBetween(spX0, spX1, -D, wl, spZ0, spZ1, mat.ledge));
+
+  // Water surface (plus a thin film over the ledge)
+  const water = add(mesh(new THREE.PlaneGeometry(W, L), mat.water, { cast: false, receive: false }));
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(0, wl, 0);
+  water.renderOrder = 10;
+  const film = add(mesh(new THREE.PlaneGeometry(spX1 - hx, spL), mat.water, { cast: false, receive: false }));
+  film.rotation.x = -Math.PI / 2;
+  film.position.set((hx + spX1) / 2, wl + 0.01, (spZ0 + spZ1) / 2);
+  film.renderOrder = 10;
+
+  // Cascade down the bank below the spillway
+  {
+    const xb = spX1 + 0.8;
+    const yb = heightAt(xb, (spZ0 + spZ1) / 2) + 0.03;
+    const v = [spX1, wl + 0.01, spZ0, spX1, wl + 0.01, spZ1, spX1 + 0.05, wl - 0.15, spZ1, spX1 + 0.05, wl - 0.15, spZ0,
+      xb, yb, spZ1, xb, yb, spZ0];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+    geo.setIndex([0, 1, 2, 0, 2, 3, 3, 2, 4, 3, 4, 5]);
+    geo.computeVertexNormals();
+    const c = add(mesh(geo, mat.cascade, { cast: false, receive: false }));
+    c.renderOrder = 11;
+    // Stones where the water lands
+    const stoneGeo = new THREE.DodecahedronGeometry(1, 0);
+    for (let i = 0; i < 22; i++) {
+      const s = 0.12 + rnd() * 0.25;
+      const x = xb - 0.2 + rnd() * 1.2;
+      const z = spZ0 - 0.6 + rnd() * (spL + 1.2);
+      const st = add(mesh(stoneGeo, pick(rnd, mat.stone)));
+      st.scale.set(s * (1 + rnd() * 0.5), s * 0.55, s * (1 + rnd() * 0.5));
+      st.position.set(x, heightAt(x, z) + s * 0.1, z);
+      st.rotation.set(rnd() * 0.4, rnd() * Math.PI, rnd() * 0.4);
+    }
+  }
+
+  // ---- dock ----
+  {
+    const top = 0.18, boardW = 0.14, gap = 0.008;
+    for (let z = dock.z0; z + boardW <= dock.z1 + 1e-6; z += boardW + gap) {
+      add(boxBetween(dock.x0, dock.x1, top - 0.03, top, z, z + boardW, pick(rnd, mat.deck)));
+    }
+    add(boxBetween(dock.x0 + 0.05, -hx - t, -0.05, top - 0.03, dock.z0 + 0.05, dock.z1 - 0.05, mat.deckFrame));
+
+    // Ladder from the dock into the deep zone
+    const lz = Math.max(dz0 + 0.6, Math.min(dz1 - 0.6, p.dock.centre - 0.7));
+    const rx = -hx + 0.2;
+    for (const dzl of [-0.25, 0.25]) {
+      const path = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(rx, -1.3, lz + dzl), new THREE.Vector3(rx, top + 0.55, lz + dzl),
+        new THREE.Vector3(rx - 0.12, top + 0.82, lz + dzl), new THREE.Vector3(-hx - 0.3, top + 0.82, lz + dzl),
+        new THREE.Vector3(-hx - 0.42, top + 0.6, lz + dzl), new THREE.Vector3(-hx - 0.42, top, lz + dzl),
+      ], false, 'centripetal', 0.3);
+      add(mesh(new THREE.TubeGeometry(path, 60, 0.022, 10), mat.steel));
+    }
+    for (let y = -1.1; y < -0.05; y += 0.3) add(boxBetween(rx - 0.025, rx + 0.065, y, y + 0.025, lz - 0.25, lz + 0.25, mat.steel));
+  }
+
+  // ---- filter chamber ----
+  add(boxBetween(filt.x0, filt.x1, -0.3, p.filter.height, filt.z0, filt.z1, mat.concrete));
+  add(boxBetween(filt.x0 + 0.12, filt.x1 - 0.12, p.filter.height, p.filter.height + 0.03, filt.z0 + 0.12, filt.z1 - 0.12, mat.lid));
+  // Pipe from the filter into the pool
+  {
+    const pipe = add(mesh(new THREE.CylinderGeometry(0.05, 0.05, t + 0.3, 12), mat.concrete));
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(-hx - t / 2 + 0.05, -0.3, (filt.z0 + filt.z1) / 2);
+  }
+
+  // ---- planting ----
   const stemGeo = new THREE.CylinderGeometry(0.006, 0.013, 1, 5);
   stemGeo.translate(0, 0.5, 0);
   const headGeo = new THREE.CapsuleGeometry(0.028, 0.16, 3, 8);
-  for (let c = 0; c < p.planting.reedClusters; c++) {
-    const q = regenSpot(0.35);
-    if (!q) break;
-    const n = 10 + Math.floor(rnd() * 14);
-    for (let i = 0; i < n; i++) {
-      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.4;
-      const h = 1.0 + rnd() * 0.9;
-      const s = mesh(stemGeo, pick(rnd, mat.reed), { receive: false });
-      s.scale.set(1, h, 1);
-      s.position.set(q.x + Math.cos(a) * r, -rDepth, q.z + Math.sin(a) * r);
-      s.rotation.set((rnd() - 0.5) * 0.25, 0, (rnd() - 0.5) * 0.25);
-      g.add(s);
-      if (rnd() < 0.35) {
-        const head = mesh(headGeo, mat.cattail, { receive: false });
-        head.position.set(0, 0.85, 0);
-        head.scale.set(1, 1 / h, 1);
-        s.add(head);
+  for (const b of beds) {
+    for (let c = 0; c < p.planting.reedsPerBed; c++) {
+      const cx = b.x0 + 0.25 + rnd() * (b.x1 - b.x0 - 0.5);
+      const cz = b.z0 + 0.25 + rnd() * (b.z1 - b.z0 - 0.5);
+      const n = 8 + Math.floor(rnd() * 12);
+      for (let i = 0; i < n; i++) {
+        const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.3;
+        const h = 0.9 + rnd() * 0.8;
+        const s = add(mesh(stemGeo, pick(rnd, mat.reed), { receive: false }));
+        s.scale.set(1, h, 1);
+        s.position.set(cx + Math.cos(a) * r, bedTop, cz + Math.sin(a) * r);
+        s.rotation.set((rnd() - 0.5) * 0.25, 0, (rnd() - 0.5) * 0.25);
+        if (rnd() < 0.3) {
+          const head = mesh(headGeo, mat.cattail, { receive: false });
+          head.position.set(0, 0.85, 0);
+          head.scale.set(1, 1 / h, 1);
+          s.add(head);
+        }
       }
     }
   }
 
-  // Water lilies
+  // Water lilies in the open shallow areas between the beds
   const lilyGeo = new THREE.CircleGeometry(1, 24, 0.25, Math.PI * 2 - 0.5);
   lilyGeo.rotateX(-Math.PI / 2);
   const petalGeo = new THREE.SphereGeometry(0.07, 10, 6);
   const centreGeo = new THREE.SphereGeometry(0.025, 8, 6);
-  for (let i = 0; i < p.planting.lilyPads; i++) {
-    const q = regenSpot(0.25);
-    if (!q) break;
+  const openX = hx - bedW - 0.25;
+  const ends = [[-hz + 0.3, dz0 - 0.3], [dz1 + 0.3, hz - 0.3]].filter(([a, b]) => b > a);
+  for (let i = 0; i < p.planting.lilyPads && ends.length && openX > 0; i++) {
+    const [a, b] = ends[i % ends.length];
+    const x = (rnd() * 2 - 1) * openX, z = a + rnd() * (b - a);
     const r = 0.12 + rnd() * 0.12;
-    const pad = mesh(lilyGeo, mat.lily, { cast: false });
+    const pad = add(mesh(lilyGeo, mat.lily, { cast: false }));
     pad.scale.setScalar(r);
-    pad.position.set(q.x, wl + 0.008, q.z);
+    pad.position.set(x, wl + 0.008, z);
     pad.rotation.y = rnd() * Math.PI * 2;
-    g.add(pad);
     if (rnd() < 0.3) {
-      const f = mesh(petalGeo, mat.flower);
+      const f = add(mesh(petalGeo, mat.flower));
       f.scale.set(1, 0.5, 1);
-      f.position.set(q.x, wl + 0.04, q.z);
-      const fc = mesh(centreGeo, mat.flowerCentre);
-      fc.position.set(q.x, wl + 0.07, q.z);
-      g.add(f, fc);
+      f.position.set(x, wl + 0.04, z);
+      add(mesh(centreGeo, mat.flowerCentre)).position.set(x, wl + 0.07, z);
     }
   }
 
-  // Edge stones and grasses around the bank (not on the deck side)
-  const outward = (i) => {
-    const a = outline[(i - 1 + outline.length) % outline.length], b = outline[(i + 1) % outline.length];
-    let nx = b.z - a.z, nz = -(b.x - a.x);
-    const len = Math.hypot(nx, nz) || 1;
-    nx /= len; nz /= len;
-    const q = outline[i];
-    if (pointInPolygon({ x: q.x + nx * 0.05, z: q.z + nz * 0.05 }, outline)) { nx = -nx; nz = -nz; }
-    return { nx, nz };
-  };
-  const stoneGeo = new THREE.DodecahedronGeometry(1, 0);
-  const grassGeo = new THREE.ConeGeometry(0.04, 1, 4);
-  grassGeo.translate(0, 0.5, 0);
-  const deckClear = (q) => !p.deck.enabled || q.x > 0.5 || Math.abs(q.z) > W / 2 + p.deck.extraWidth + 0.3;
-  for (let i = 0; i < outline.length; i += 3) {
-    const q = outline[i];
-    if (!deckClear(q)) continue;
-    const { nx, nz } = outward(i);
-    if (p.planting.edgeStones && rnd() < 0.8) {
-      const s = 0.18 + rnd() * 0.25;
-      const st = mesh(stoneGeo, pick(rnd, mat.stone));
-      st.scale.set(s * (1 + rnd() * 0.5), s * 0.55, s * (1 + rnd() * 0.5));
-      st.position.set(q.x + nx * s * 0.6, s * 0.15, q.z + nz * s * 0.6);
-      st.rotation.set(rnd() * 0.4, rnd() * Math.PI, rnd() * 0.4);
-      g.add(st);
-    }
-    if (p.planting.edgeGrasses && rnd() < 0.3) {
-      const off = 0.6 + rnd() * 0.8;
-      const gx = q.x + nx * off, gz = q.z + nz * off;
+  // Grasses around the terrace edge
+  if (p.planting.edgeGrasses) {
+    const grassGeo = new THREE.ConeGeometry(0.04, 1, 4);
+    grassGeo.translate(0, 0.5, 0);
+    const inRect = (x, z, r, m) => x > r.x0 - m && x < r.x1 + m && z > r.z0 - m && z < r.z1 + m;
+    const poolRect = { x0: -hx - t, x1: spX1, z0: -hz - t, z1: hz + t };
+    let placed = 0;
+    for (let tries = 0; tries < 600 && placed < 26; tries++) {
+      const x = -hx - 4 + rnd() * (W + 6), z = -hz - 2.5 + rnd() * (L + 5);
+      if (inRect(x, z, poolRect, 0.4) || inRect(x, z, dock, 0.3) || inRect(x, z, filt, 0.3)) continue;
+      if (x > spX1 - 0.2 && z > spZ0 - 1 && z < spZ1 + 1) continue; // keep the view from the seat clear
+      if (!inRect(x, z, poolRect, 2.2)) continue;
+      placed++;
       const m = pick(rnd, mat.grass);
       for (let k = 0; k < 14; k++) {
-        const blade = mesh(grassGeo, m, { receive: false });
+        const bx = x + (rnd() - 0.5) * 0.25, bz = z + (rnd() - 0.5) * 0.25;
+        const blade = add(mesh(grassGeo, m, { receive: false }));
         blade.scale.set(1, 0.35 + rnd() * 0.45, 1);
-        blade.position.set(gx + (rnd() - 0.5) * 0.25, 0, gz + (rnd() - 0.5) * 0.25);
+        blade.position.set(bx, heightAt(bx, bz) - 0.02, bz);
         blade.rotation.set((rnd() - 0.5) * 0.9, 0, (rnd() - 0.5) * 0.9);
-        g.add(blade);
       }
     }
   }
 
-  // Trees around the garden
+  // Trees
   const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 1, 8);
   trunkGeo.translate(0, 0.5, 0);
   const crownGeo = new THREE.IcosahedronGeometry(1, 1);
-  for (let i = 0; i < p.planting.trees; i++) {
-    const a = (i / Math.max(1, p.planting.trees)) * Math.PI * 2 + 0.6 + rnd() * 0.8;
-    const r = span / 2 + 3 + rnd() * 4;
-    const x = centre.x + Math.cos(a) * r, z = centre.z + Math.sin(a) * r;
-    if (p.deck.enabled && x < 0 && x > -p.deck.depth - 2 && Math.abs(z) < W / 2 + p.deck.extraWidth + 2) continue;
-    // Keep the default camera's line of sight clear (camera sits towards -x, +z; see frame())
-    if ((Math.cos(a) * -0.5 + Math.sin(a) * 0.87) > 0.4) continue;
-    const h = 2 + rnd() * 1.5;
-    const trunk = mesh(trunkGeo, mat.trunk);
+  for (const tr of p.trees) {
+    const y = heightAt(tr.x, tr.z);
+    const h = 2.2 + rnd() * 1.2;
+    const trunk = add(mesh(trunkGeo, mat.trunk));
     trunk.scale.set(1, h, 1);
-    trunk.position.set(x, 0, z);
-    const cr = 1.3 + rnd() * 0.9;
-    const crown = mesh(crownGeo, pick(rnd, mat.foliage));
-    crown.scale.set(cr, cr * 1.1, cr);
-    crown.position.set(x, h + cr * 0.7, z);
-    g.add(trunk, crown);
+    trunk.position.set(tr.x, y - 0.1, tr.z);
+    const crown = add(mesh(crownGeo, pick(rnd, mat.foliage)));
+    crown.scale.set(tr.radius, tr.radius * 1.1, tr.radius);
+    crown.position.set(tr.x, y + h + tr.radius * 0.7, tr.z);
+  }
+
+  // ---- labels (matching the drawing) ----
+  if (p.showLabels) {
+    add(
+      label('deep', 0, wl + 0.05, (dz0 + dz1) / 2),
+      label('shallow', 0, wl + 0.05, (-hz + dz0) / 2),
+      label('shallow', 0, wl + 0.05, (dz1 + hz) / 2),
+      label('plants', (beds[0].x0 + beds[0].x1) / 2, 1.2, (beds[0].z0 + beds[0].z1) / 2),
+      label('seat / spillway', (spX0 + spX1) / 2, 0.25, (spZ0 + spZ1) / 2),
+      label('dock', (dock.x0 + dock.x1) / 2, 0.45, (dock.z0 + dock.z1) / 2),
+      label('filter', (filt.x0 + filt.x1) / 2, p.filter.height + 0.3, (filt.z0 + filt.z1) / 2),
+    );
+    for (const tr of p.trees) add(label('tree', tr.x, heightAt(tr.x, tr.z) + 4.5, tr.z));
   }
 
   scene.add(g);
-  sun.target.position.copy(centre);
-  sun.position.set(centre.x - 12, 20, centre.z + 10);
 
   // ---- stats ----
-  const swimArea = L * W;
-  const totalArea = polygonArea(outline);
-  const regenArea = totalArea - (L + 2 * t) * (W + 2 * t);
-  const volume = swimArea * (D + wl) + regenArea * (rDepth + wl);
-  const ratio = regenArea / swimArea;
+  const area = W * L;
+  const deepArea = W * (dz1 - dz0);
+  const bedArea = beds.reduce((s, b) => s + (b.x1 - b.x0) * (b.z1 - b.z0), 0);
+  const shallowOpen = area - deepArea - bedArea;
+  const volume = deepArea * (D + wl) + shallowOpen * (sh + wl) + bedArea * Math.max(0, -bedTop + wl);
   document.getElementById('stats').innerHTML = `
-    <b>Swim zone</b> ${L.toFixed(1)} × ${W.toFixed(1)} m, ${(D + wl).toFixed(2)} m water depth<br>
-    <b>Swim area</b> ${swimArea.toFixed(1)} m² &nbsp; <b>Regen area</b> ${regenArea.toFixed(1)} m²<br>
-    <b>Total water surface</b> ${totalArea.toFixed(1)} m²<br>
+    <b>Pool</b> ${W.toFixed(1)} × ${L.toFixed(1)} m (${area.toFixed(1)} m²)<br>
+    <b>Deep zone</b> ${deepArea.toFixed(1)} m², ${(D + wl).toFixed(2)} m water depth<br>
+    <b>Shallow (open)</b> ${shallowOpen.toFixed(1)} m², ${(sh + wl).toFixed(2)} m deep<br>
+    <b>Planted beds</b> ${bedArea.toFixed(1)} m² (${Math.round((bedArea / area) * 100)} % of surface)<br>
     <b>Approx. water volume</b> ${volume.toFixed(1)} m³ (${Math.round(volume * 1000).toLocaleString('en-GB')} L)<br>
-    <b>Regen : swim ratio</b> <span class="${ratio < 1 ? 'warn' : ''}">${ratio.toFixed(2)} : 1</span>
-    <div class="hint">Unfiltered, fully planted systems usually aim for a regeneration zone at least as large as the swim zone.</div>`;
+    <b>Fall across site</b> ${(p.site.slope * 100).toFixed(0)} % towards the spillway`;
 
-  return { centre, span };
+  return { span: Math.max(W, L) };
 }
 
 // ---------- camera framing ----------
-function frame({ centre, span }) {
-  controls.target.copy(centre).add(new THREE.Vector3(0, -0.3, 0));
-  camera.position.set(centre.x - span * 0.55, span * 0.6, centre.z + span * 0.95);
+function frame({ span }) {
+  controls.target.set(0, -0.3, 0);
+  camera.position.set(span * 1.0, span * 0.65, span * 0.75);
   controls.update();
 }
 
 let info = build(params);
 frame(info);
+window.pool = { camera, controls, params }; // handy for poking at the scene from the browser console
 
 // ---------- GUI ----------
 const gui = new GUI({ title: 'Pool design' });
 const rebuild = () => { info = build(params); };
-const fs = gui.addFolder('Swim zone');
-fs.add(params.swim, 'length', 3, 25, 0.1).onChange(rebuild);
-fs.add(params.swim, 'width', 2, 10, 0.1).onChange(rebuild);
-fs.add(params.swim, 'depth', 1, 3, 0.05).onChange(rebuild);
-fs.add(params.swim, 'wallThickness', 0.1, 0.5, 0.01).onChange(rebuild);
-fs.add(params.swim, 'wallTopDepth', 0.1, 0.6, 0.01).name('submerged wall depth').onChange(rebuild);
-const fr = gui.addFolder('Regeneration zone');
-fr.add(params.regen, 'endLength', 0.8, 15, 0.1).name('end length').onChange(rebuild);
-fr.add(params.regen, 'sideWidth', 0.8, 6, 0.1).name('side width').onChange(rebuild);
-fr.add(params.regen, 'depth', 0.2, 1, 0.05).onChange(rebuild);
-fr.add(params.regen, 'wobble', 0, 2, 0.05).onChange(rebuild);
-gui.add(params, 'waterLevel', -0.3, 0, 0.01).name('water level').onChange(rebuild);
-const fd = gui.addFolder('Deck');
-fd.add(params.deck, 'enabled').onChange(rebuild);
-fd.add(params.deck, 'depth', 0.5, 6, 0.1).onChange(rebuild);
-fd.add(params.deck, 'extraWidth', 0, 4, 0.1).name('extra width').onChange(rebuild);
-const fp = gui.addFolder('Planting');
-fp.add(params.planting, 'reedClusters', 0, 60, 1).name('reed clusters').onChange(rebuild);
-fp.add(params.planting, 'lilyPads', 0, 120, 1).name('lily pads').onChange(rebuild);
-fp.add(params.planting, 'edgeStones').name('edge stones').onChange(rebuild);
-fp.add(params.planting, 'edgeGrasses').name('edge grasses').onChange(rebuild);
-fp.add(params.planting, 'trees', 0, 12, 1).onChange(rebuild);
-fp.add(params.planting, 'seed', 1, 999, 1).onChange(rebuild);
+const fp = gui.addFolder('Pool');
+fp.add(params.pool, 'width', 3, 10, 0.05).onChange(rebuild);
+fp.add(params.pool, 'length', 5, 20, 0.05).onChange(rebuild);
+fp.add(params.deep, 'from', -8, 8, 0.05).name('deep zone from').onChange(rebuild);
+fp.add(params.deep, 'to', -8, 8, 0.05).name('deep zone to').onChange(rebuild);
+fp.add(params.deep, 'depth', 1, 3, 0.05).name('deep depth').onChange(rebuild);
+fp.add(params.shallow, 'depth', 0.2, 1, 0.05).name('shallow depth').onChange(rebuild);
+fp.add(params, 'waterLevel', -0.3, 0, 0.01).name('water level').onChange(rebuild);
+const fb = gui.addFolder('Planted beds');
+fb.add(params.plantBeds, 'width', 0.3, 3, 0.05).onChange(rebuild);
+fb.add(params.plantBeds, 'length', 0.3, 6, 0.05).onChange(rebuild);
+fb.add(params.plantBeds, 'topDepth', 0.05, 0.6, 0.01).name('top depth').onChange(rebuild);
+fb.add(params.planting, 'reedsPerBed', 0, 15, 1).name('reed clumps').onChange(rebuild);
+fb.add(params.planting, 'lilyPads', 0, 60, 1).name('lily pads').onChange(rebuild);
+const ff = gui.addFolder('Spillway, dock, filter');
+ff.add(params.spillway, 'centre', -6, 6, 0.05).name('spillway centre').onChange(rebuild);
+ff.add(params.spillway, 'length', 0.5, 10, 0.05).name('spillway length').onChange(rebuild);
+ff.add(params.spillway, 'width', 0.2, 1.2, 0.05).name('spillway width').onChange(rebuild);
+ff.add(params.dock, 'centre', -6, 6, 0.05).name('dock centre').onChange(rebuild);
+ff.add(params.dock, 'length', 1, 8, 0.05).name('dock length').onChange(rebuild);
+ff.add(params.dock, 'depth', 0.5, 5, 0.05).name('dock depth').onChange(rebuild);
+ff.add(params.filter, 'centre', -6, 6, 0.05).name('filter centre').onChange(rebuild);
+const fs = gui.addFolder('Site');
+fs.add(params.site, 'slope', 0, 0.4, 0.01).onChange(rebuild);
+fs.add(params.planting, 'edgeGrasses').name('edge grasses').onChange(rebuild);
+fs.add(params.planting, 'seed', 1, 999, 1).onChange(rebuild);
+fs.add(params, 'showLabels').name('labels').onChange(rebuild);
+fb.close(); ff.close(); fs.close();
 
 gui.add({ reframe: () => frame(info) }, 'reframe').name('Reset camera');
 gui.add({
@@ -454,8 +480,10 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
 });
 renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
 });

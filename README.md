@@ -4,7 +4,14 @@ Plans for a natural swimming pool in Talong
 
 ## 3D model
 
-A parametric Three.js model of the pool: rectangular swim zone, shallow planted regeneration zone with an organic outline, submerged separating wall, timber deck, ladder, reeds, water lilies, edge stones, grasses and trees.
+A parametric Three.js model of the pool, translated from the plan drawing `2d_top_view.svg` (taken at 1 mm = 10 cm, so roughly 5.7 × 11.4 m):
+
+- a full-width **deep** swim zone in the middle, with **shallow** zones at each end
+- four **planted beds** in the corners of the shallow zones (reeds), lilies in the open shallow water
+- a timber **dock** with a ladder and a **filter** chamber on the uphill side
+- a **seat / spillway** ledge at water level on the downhill side, spilling down the bank
+- the site on a slight hill falling towards the spillway, levelled to a terrace around the pool
+- two trees, labels matching the drawing
 
 ### Viewing
 
@@ -18,7 +25,7 @@ Then open <http://localhost:8080>. Drag to orbit, scroll to zoom, right-drag to 
 
 ### Changing the design
 
-- **Directly:** edit `src/config.js` (all values in metres, commented) and reload.
+- **Directly:** edit `src/config.js` (all values in metres, commented; origin at the pool centre, +x downhill) and reload.
 - **Live:** use the "Pool design" sliders. "Copy settings" copies the current values in `config.js` format to paste back in.
 - **Export:** "Export .glb" downloads the model for Blender, SketchUp etc.
 

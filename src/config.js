@@ -1,42 +1,61 @@
-// Natural swimming pool — design parameters.
-// All distances are in metres. Ground level is y = 0; negative values are below ground.
+// Natural swimming pool — design parameters, translated from 2d_top_view.svg
+// (drawing scale taken as 1 mm = 10 cm).
+//
+// All distances are in metres. The origin is the centre of the pool's water surface.
+//   x = across the pool's width; +x is DOWNHILL (spillway side), -x is uphill (dock side)
+//   z = along the pool's length (matches "down the page" on the drawing)
+//   y = height; ground level at the pool edge is 0
+//
 // Edit these values directly (then reload the page), or tweak them live with the
 // sliders in the browser and use "Copy settings" to paste the result back here.
 
 export const config = {
-  // The swim zone: a clean, unplanted rectangular basin.
-  // Its origin (x = 0) is the deck end; it extends along +x.
-  swim: {
-    length: 8,          // along the long axis
-    width: 4,
-    depth: 1.8,         // floor depth below ground
+  pool: {
+    width: 5.7,          // across (x)
+    length: 11.4,        // along (z)
     wallThickness: 0.25,
-    wallTopDepth: 0.3,  // how far below ground the submerged separating wall stops,
-                        // letting water flow over it between the zones
   },
 
-  // The regeneration zone: shallow, planted area that cleans the water.
-  regen: {
-    endLength: 5,       // how far it extends beyond the far end of the swim zone
-    sideWidth: 2,       // width of the planted strips along each long side
-    depth: 0.5,         // floor depth below ground
-    wobble: 0.4,        // how irregular / organic the outline is (0 = smooth)
+  // Deep swim zone: spans the full width, between these z positions.
+  deep: { from: -2.7, to: 2.4, depth: 1.8 },
+
+  // Shallow zones fill each end of the pool beyond the deep zone.
+  shallow: { depth: 0.5 },
+
+  // Four planted beds, one in each corner of the shallow zones.
+  plantBeds: {
+    width: 1.25,         // across (x), from the side wall inwards
+    length: 2.85,        // along (z), from the end wall towards the deep zone
+    topDepth: 0.2,       // bed surface below ground level (just under water)
   },
 
-  waterLevel: -0.1,     // water surface height (just below ground level)
+  // Seat / spillway ledge on the downhill side wall, at water level.
+  spillway: { centre: -0.25, length: 4.2, width: 0.45 },
 
-  deck: {
-    enabled: true,
-    depth: 2.5,         // how far the timber deck extends back from the swim zone
-    extraWidth: 1.5,    // how far it extends beyond each side of the swim zone
+  // Timber dock on the uphill side wall, beside the deep zone.
+  dock: { centre: 0.75, length: 3.4, depth: 2.15 },
+
+  // Filter chamber on the uphill side, next to the dock.
+  filter: { centre: -2.5, length: 2.8, depth: 2.15, height: 0.35 },
+
+  // Trees (absolute positions; radius is the canopy radius).
+  trees: [
+    { x: -6.35, z: -4.25, radius: 1.3 },
+    { x: -7.15, z: 5.05, radius: 1.3 },
+  ],
+
+  site: {
+    slope: 0.12,         // fall of the natural ground towards +x (0.12 = 12 %)
   },
+
+  waterLevel: -0.08,     // set by the spillway lip
 
   planting: {
-    reedClusters: 18,
-    lilyPads: 30,
-    edgeStones: true,
+    reedsPerBed: 5,      // reed clumps in each planted bed
+    lilyPads: 14,        // in the open shallow areas
     edgeGrasses: true,
-    trees: 4,
-    seed: 7,            // change to shuffle plant / stone placement and outline wobble
+    seed: 7,             // change to shuffle plant / stone placement
   },
+
+  showLabels: true,      // labels matching the drawing
 };
