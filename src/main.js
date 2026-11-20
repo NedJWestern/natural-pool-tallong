@@ -44,12 +44,12 @@ scene.add(sun, sun.target);
 const std = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.95, ...extra });
 const mat = {
   lawn: std(0x6f9a45, { roughness: 1 }),
-  gravel: std(0xa08d6a, { roughness: 1 }),
-  soil: std(0x6b5a40, { roughness: 1 }),
+  gravel: std(0xa08d6a, { roughness: 1, side: THREE.DoubleSide }),
+  soil: std(0x6b5a40, { roughness: 1, side: THREE.DoubleSide }),
   swimFloor: std(0x3e4a48, { roughness: 0.9 }),
-  wall: std(0x55605d, { roughness: 0.85 }),
-  coping: std(0xb3ada2),
-  ledge: std(0x9d978c),
+  wall: std(0x55605d, { roughness: 0.85, side: THREE.DoubleSide }), // extruded outlines: draw both faces
+  coping: std(0xb3ada2, { side: THREE.DoubleSide }),
+  ledge: std(0x9d978c, { side: THREE.DoubleSide }),
   concrete: std(0x8a8a86),
   lid: std(0x5c5f60, { roughness: 0.7 }),
   water: new THREE.MeshPhysicalMaterial({
@@ -100,6 +100,101 @@ function boxBetween(x0, x1, y0, y1, z0, z1, material, opts) {
   const b = mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0), material, opts);
   b.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
   return b;
+}
+
+// ---------- 2D outline helpers (points are {x, z}, counter-clockwise from +x towards +z) ----------
+const dedupe = (pts) => pts.filter((q, i) => {
+  const n = pts[(i + 1) % pts.length];
+  return Math.hypot(q.x - n.x, q.z - n.z) > 1e-4;
+});
+
+// Rounded-rectangle perimeter with half-sizes a × b and corner radius r, starting at (a, zFrom)
+// on the +x side, running round via +z, and ending at (a, zTo) on the +x side again.
+function rrPath(a, b, r, zFrom, zTo, seg = 12) {
+  r = Math.max(0.01, Math.min(r, a - 0.001, b - 0.001));
+  const pts = [{ x: a, z: zFrom }];
+  for (const [cx, cz, start] of [[a - r, b - r, 0], [-a + r, b - r, 90], [-a + r, -b + r, 180], [a - r, -b + r, 270]]) {
+    for (let i = 0; i <= seg; i++) {
+      const th = ((start + (90 * i) / seg) * Math.PI) / 180;
+      pts.push({ x: cx + r * Math.cos(th), z: cz + r * Math.sin(th) });
+    }
+  }
+  pts.push({ x: a, z: zTo });
+  return pts;
+}
+const rrLoop = (a, b, r, cx = 0, cz = 0) =>
+  dedupe(rrPath(a, b, r, 0, 0).slice(0, -1)).map(q => ({ x: q.x + cx, z: q.z + cz }));
+const rectLoop = (x0, x1, z0, z1) => [{ x: x1, z: z0 }, { x: x1, z: z1 }, { x: x0, z: z1 }, { x: x0, z: z0 }];
+const roundedRect = (x0, x1, z0, z1, r) => rrLoop((x1 - x0) / 2, (z1 - z0) / 2, r, (x0 + x1) / 2, (z0 + z1) / 2);
+
+// Sutherland–Hodgman: clip a polygon by a convex counter-clockwise polygon.
+function clipConvex(subject, clip) {
+  let out = subject;
+  for (let i = 0; i < clip.length && out.length; i++) {
+    const a = clip[i], b = clip[(i + 1) % clip.length];
+    const side = (q) => (b.x - a.x) * (q.z - a.z) - (b.z - a.z) * (q.x - a.x);
+    const input = out; out = [];
+    for (let j = 0; j < input.length; j++) {
+      const c = input[j], d = input[(j + 1) % input.length];
+      const sc = side(c), sd = side(d);
+      if (sc >= 0) out.push(c);
+      if ((sc >= 0) !== (sd >= 0)) {
+        const k = sc / (sc - sd);
+        out.push({ x: c.x + (d.x - c.x) * k, z: c.z + (d.z - c.z) * k });
+      }
+    }
+  }
+  return dedupe(out);
+}
+
+function polyArea(pts) {
+  let s = 0;
+  for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length]; s += a.x * b.z - b.x * a.z; }
+  return Math.abs(s) / 2;
+}
+function pointInPoly(q, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const a = pts[i], b = pts[j];
+    if ((a.z > q.z) !== (b.z > q.z) && q.x < ((b.x - a.x) * (q.z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+const toShape = (outer, holes = []) => {
+  const sh = new THREE.Shape(outer.map(q => new THREE.Vector2(q.x, -q.z)));
+  for (const h of holes) sh.holes.push(new THREE.Path(h.map(q => new THREE.Vector2(q.x, -q.z))));
+  return sh;
+};
+// Vertical prism from an outline, between heights y0 and y1. Materials: [top/bottom, sides].
+function extrudeXZ(outer, holes, y0, y1, material, opts) {
+  const geo = new THREE.ExtrudeGeometry(toShape(outer, holes), { depth: y1 - y0, bevelEnabled: false, curveSegments: 1 });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, y0, 0);
+  return mesh(geo, material, opts);
+}
+function flatXZ(outer, y, material, opts) {
+  const geo = new THREE.ShapeGeometry(toShape(outer), 1);
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, y, 0);
+  return mesh(geo, material, opts);
+}
+
+// Rounded rectangle (centred) membership and nearest point on its edge.
+function inRR(x, z, a, b, r) {
+  const ax = Math.abs(x), az = Math.abs(z);
+  if (ax >= a || az >= b) return false;
+  const qx = ax - (a - r), qz = az - (b - r);
+  return !(qx > 0 && qz > 0 && Math.hypot(qx, qz) >= r);
+}
+function snapRR(x, z, a, b, r) {
+  const sx = Math.sign(x) || 1, sz = Math.sign(z) || 1;
+  const qx = Math.abs(x) - (a - r), qz = Math.abs(z) - (b - r);
+  if (qx > 0 && qz > 0) {
+    const l = Math.hypot(qx, qz) || 1;
+    return { x: sx * (a - r + (r * qx) / l), z: sz * (b - r + (r * qz) / l), side: 'corner' };
+  }
+  return a - Math.abs(x) < b - Math.abs(z) ? { x: sx * a, z, side: sx > 0 ? '+x' : '-x' } : { x, z: sz * b, side: 'end' };
 }
 
 function label(text, x, y, z) {
@@ -153,6 +248,11 @@ function build(p) {
   const dock = { x0: -hx - p.dock.depth, x1: -hx + 0.06, z0: p.dock.centre - p.dock.length / 2, z1: p.dock.centre + p.dock.length / 2 };
   const filt = { x0: -hx - t - p.filter.depth, x1: -hx - t, z0: p.filter.centre - p.filter.length / 2, z1: p.filter.centre + p.filter.length / 2 };
 
+  // Corner radius of the pool; kept small enough that the deep zone stays a straight band.
+  const Rc = Math.max(0.05, Math.min(p.pool.cornerRadius, hx - 0.05, hz - Math.max(-dz0, dz1) - 0.05));
+  const inner = rrLoop(hx, hz, Rc);                     // water's edge (inside face of the walls)
+  const lip = wl - 0.02; // spillway top, 2 cm under the water line (a surface exactly at water level flickers)
+
   // ---- terrain ----
   // Natural ground falls towards +x. Around the pool, dock and filter it is levelled to a
   // terrace at y = 0, blending back to the natural slope (quickly on the downhill side).
@@ -166,9 +266,9 @@ function build(p) {
     const ux = Math.max(0, terrace.x0 - x) / 3.0;
     const dx = Math.max(0, x - terrace.x1) / 0.7;
     const zz = Math.max(0, terrace.z0 - z, z - terrace.z1) / 3.0;
-    // Downhill of the drain the ground starts below the spillway lip, so nothing
-    // rises above the water's edge in the view (infinity-edge effect).
-    const base = x >= terrace.x1 - 1e-6 ? lowEdge : 0;
+    // Downhill of the pool the ground eases down to below the spillway lip by the drain's
+    // outer edge, so nothing rises above the water's edge in the view (infinity-edge effect).
+    const base = x <= hx + t ? 0 : lowEdge * smoothstep((x - hx - t) / drW);
     return base + (natural(x, z) - base) * smoothstep(Math.hypot(ux, dx, zz));
   };
   {
@@ -176,17 +276,22 @@ function build(p) {
     const geo = new THREE.PlaneGeometry(size, size, seg, seg);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
-    // Pool opening: triangles entirely inside are dropped; inside vertices of the
-    // triangles straddling the edge are snapped onto it.
-    const hole = { x0: -hx - t, x1: drX1, z0: -hz - t, z1: hz + t };
+    // Pool opening (outside of the walls, plus the drain notch): triangles entirely inside
+    // are dropped; inside vertices of triangles straddling the edge are snapped onto it.
+    const A = hx + t, B = hz + t, R = Rc + t;
     const inside = new Uint8Array(pos.count);
     for (let i = 0; i < pos.count; i++) {
       let x = pos.getX(i), z = pos.getZ(i);
-      if (x > hole.x0 && x < hole.x1 && z > hole.z0 && z < hole.z1) {
+      const inNotch = x >= A - 1e-6 && x < drX1 && z > spZ0 && z < spZ1;
+      if (inNotch) {
         inside[i] = 1;
-        const d = [x - hole.x0, hole.x1 - x, z - hole.z0, hole.z1 - z];
-        const m = d.indexOf(Math.min(...d));
-        if (m === 0) x = hole.x0; else if (m === 1) x = hole.x1; else if (m === 2) z = hole.z0; else z = hole.z1;
+        const d = [drX1 - x, z - spZ0, spZ1 - z], m = d.indexOf(Math.min(...d));
+        if (m === 0) x = drX1; else if (m === 1) z = spZ0; else z = spZ1;
+      } else if (inRR(x, z, A, B, R)) {
+        inside[i] = 1;
+        const q = snapRR(x, z, A, B, R);
+        x = q.x; z = q.z;
+        if (q.side === '+x' && z > spZ0 && z < spZ1) x = drX1;
       }
       pos.setXYZ(i, x, heightAt(x, z), z);
     }
@@ -200,73 +305,69 @@ function build(p) {
   }
 
   // ---- pool structure ----
-  // Side walls (run the full length, including corners)
-  add(boxBetween(-hx - t, -hx, -D, 0, -hz - t, hz + t, mat.wall));
-  add(boxBetween(hx, hx + t, -D, 0, -hz - t, spZ0, mat.wall));
-  add(boxBetween(hx, hx + t, -D, 0, spZ1, hz + t, mat.wall));
-  // Spillway: the wall is lowered to water level above the seat
-  // (2 cm below the water line: water flows over in a thin film, and no surface sits
-  // exactly at water level, which would flicker against the water plane)
-  const lip = wl - 0.02;
-  add(boxBetween(hx, hx + t, -D, lip, spZ0, spZ1, mat.ledge));
+  // Walls: a rounded ring up to the spillway lip, then the rest of the way to ground level
+  // everywhere except over the spillway, where the lowered wall is the infinity edge.
+  add(extrudeXZ(rrLoop(hx + t, hz + t, Rc + t), [inner], -D, lip, mat.wall));
+  add(extrudeXZ([...dedupe(rrPath(hx, hz, Rc, spZ1, spZ0)), ...dedupe(rrPath(hx + t, hz + t, Rc + t, spZ1, spZ0)).reverse()],
+    [], lip, 0, mat.wall));
   // Seat along the inside of the downhill wall, the full length of the deep zone
   add(boxBetween(hx - seatW, hx, -D, seatTop, dz0, dz1, mat.ledge));
   // Spillway step at the back of the seat, its top level with the lowered wall
   add(boxBetween(hx - spW, hx, seatTop, lip, spZ0, spZ1, mat.ledge));
-  // End walls
-  add(boxBetween(-hx, hx, -D, 0, -hz - t, -hz, mat.wall));
-  add(boxBetween(-hx, hx, -D, 0, hz, hz + t, mat.wall));
   // Deep zone floor
   const floor = add(mesh(new THREE.PlaneGeometry(W, dz1 - dz0), mat.swimFloor, { cast: false }));
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, -D, (dz0 + dz1) / 2);
   // Shallow ends: solid fill with a gravel top; the side faces form the steps down to the deep zone
-  const fillMats = [mat.wall, mat.wall, mat.gravel, mat.wall, mat.wall, mat.wall];
-  add(boxBetween(-hx, hx, -D, -sh, -hz, dz0, fillMats));
-  add(boxBetween(-hx, hx, -D, -sh, dz1, hz, fillMats));
-  // Planted beds in the four corners
+  const fillMats = [mat.gravel, mat.wall];
+  add(extrudeXZ(clipConvex(inner, rectLoop(-hx - 1, hx + 1, -hz - 1, dz0)), [], -D, -sh, fillMats));
+  add(extrudeXZ(clipConvex(inner, rectLoop(-hx - 1, hx + 1, dz1, hz + 1)), [], -D, -sh, fillMats));
+  // Planted beds in the four corners (rounded inner corner; outer corner follows the pool),
+  // plus the strip along the far end wall
   const beds = [];
+  const rb = Math.max(0.05, Math.min(p.plantBeds.cornerRadius, bedW / 2));
   const bedLen0 = Math.min(p.plantBeds.length, dz0 + hz - 0.05);
   const bedLen1 = Math.min(p.plantBeds.length, hz - dz1 - 0.05);
-  for (const [x0, x1] of [[-hx, -hx + bedW], [hx - bedW, hx]]) {
-    beds.push({ x0, x1, z0: -hz, z1: -hz + bedLen0 }, { x0, x1, z0: hz - bedLen1, z1: hz });
+  for (const [x0, x1, ex0, ex1] of [[-hx, -hx + bedW, -hx - 1, -hx + bedW], [hx - bedW, hx, hx - bedW, hx + 1]]) {
+    beds.push({ x0, x1, z0: -hz, z1: -hz + bedLen0, poly: clipConvex(roundedRect(ex0, ex1, -hz - 1, -hz + bedLen0, rb), inner) });
+    beds.push({ x0, x1, z0: hz - bedLen1, z1: hz, poly: clipConvex(roundedRect(ex0, ex1, hz - bedLen1, hz + 1, rb), inner) });
   }
   if (p.plantBeds.endStrip > 0) {
     const sd = Math.min(p.plantBeds.endStrip, hz - dz1 - 0.3);
-    beds.push({ x0: -hx + bedW, x1: hx - bedW, z0: hz - sd, z1: hz });
+    beds.push({ x0: -hx + bedW, x1: hx - bedW, z0: hz - sd, z1: hz, poly: clipConvex(rectLoop(-hx + bedW, hx - bedW, hz - sd, hz + 1), inner) });
   }
-  for (const b of beds) add(boxBetween(b.x0, b.x1, -sh, bedTop, b.z0, b.z1, mat.soil));
+  for (const b of beds) add(extrudeXZ(b.poly, [], -sh, bedTop, mat.soil));
 
   // Entry steps into the shallow entrance end (-z)
   if (p.shallow.entrySteps) {
     const sw = Math.min(1.6, W - 2 * bedW - 0.2), n = 2, tread = 0.32;
     for (let i = 0; i < n; i++) {
       const top = -sh * (i + 1) / (n + 1);
-      add(boxBetween(-sw / 2, sw / 2, -sh, top, -hz, -hz + tread * (n - i), mat.ledge));
+      add(extrudeXZ(clipConvex(rectLoop(-sw / 2, sw / 2, -hz - 1, -hz + tread * (n - i)), inner), [], -sh, top, mat.ledge));
     }
   }
 
-  // Coping stones around the top of the walls (not over the spillway).
-  // On the downhill side they also close off the ground beyond the ends of the drain.
-  const cy0 = -0.01, cy1 = 0.06, ov = 0.06, out = 0.12;
-  add(boxBetween(-hx - t - out, -hx + ov, cy0, cy1, -hz - t - out, hz + t + out, mat.coping));
-  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, -hz - t - out, spZ0, mat.coping));
-  add(boxBetween(hx - ov, drX1 + out, -drD - 0.1, cy1, spZ1, hz + t + out, mat.coping));
-  add(boxBetween(-hx + ov, hx - ov, cy0, cy1, -hz - t - out, -hz + ov, mat.coping));
-  add(boxBetween(-hx + ov, hx - ov, cy0, cy1, hz - ov, hz + t + out, mat.coping));
+  // Coping stones around the top of the walls, following the rounded corners (not over the spillway)
+  const cy0 = -0.15, cy1 = 0.06, ov = 0.06, out = 0.12;
+  add(extrudeXZ([
+    ...dedupe(rrPath(hx - ov, hz - ov, Rc - ov, spZ1, spZ0)),
+    ...dedupe(rrPath(hx + t + out, hz + t + out, Rc + t + out, spZ1, spZ0)).reverse(),
+  ], [], cy0, cy1, mat.coping));
 
-  // Drain channel: gravel floor, low stone kerb on the outer side, a little water
+  // Drain channel: gravel floor, low stone kerb on the outer side, end caps, a little water
   add(boxBetween(drX0, drX1, -drD - 0.1, -drD, spZ0, spZ1, mat.gravel));
   add(boxBetween(drX1 - 0.08, drX1 + 0.02, -drD, lowEdge, spZ0, spZ1, mat.coping)); // kerb below the lip
+  add(boxBetween(drX0 - 0.01, drX1 + 0.02, -drD - 0.1, cy1, spZ0 - 0.12, spZ0, mat.coping));
+  add(boxBetween(drX0 - 0.01, drX1 + 0.02, -drD - 0.1, cy1, spZ1, spZ1 + 0.12, mat.coping));
 
-  // Water surfaces: pool, drain, and the sheet falling over the spillway into the drain
+  // Water surfaces: pool, film over the spillway, drain, and the sheet falling into the drain
   const waterPlane = (w, l, x, y, z) => {
     const m = add(mesh(new THREE.PlaneGeometry(w, l), mat.water, { cast: false, receive: false }));
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, y, z);
     m.renderOrder = 10;
   };
-  waterPlane(W, L, 0, wl, 0);
+  add(flatXZ(inner, wl, mat.water, { cast: false, receive: false })).renderOrder = 10;
   waterPlane(t, spL, hx + t / 2, wl, (spZ0 + spZ1) / 2);
   waterPlane(drW - 0.08, spL, (drX0 + drX1 - 0.08) / 2, drainWater, (spZ0 + spZ1) / 2);
   {
@@ -320,7 +421,7 @@ function build(p) {
       do {
         cx = b.x0 + 0.25 + rnd() * (b.x1 - b.x0 - 0.5);
         cz = b.z0 + 0.25 + rnd() * (b.z1 - b.z0 - 0.5);
-      } while (nearFountain(cx, cz, 0.35) && ++tries < 20);
+      } while ((nearFountain(cx, cz, 0.35) || !pointInPoly({ x: cx, z: cz }, b.poly)) && ++tries < 20);
       if (tries >= 20) continue;
       const n = 8 + Math.floor(rnd() * 12);
       for (let i = 0; i < n; i++) {
@@ -504,9 +605,9 @@ function build(p) {
   scene.add(g);
 
   // ---- stats ----
-  const area = W * L;
+  const area = polyArea(inner);
   const deepArea = W * (dz1 - dz0);
-  const bedArea = beds.reduce((s, b) => s + (b.x1 - b.x0) * (b.z1 - b.z0), 0);
+  const bedArea = beds.reduce((s, b) => s + polyArea(b.poly), 0);
   const shallowOpen = area - deepArea - bedArea;
   const volume = deepArea * (D + wl) + shallowOpen * (sh + wl) + bedArea * Math.max(0, -bedTop + wl);
   document.getElementById('stats').innerHTML = `
@@ -529,7 +630,7 @@ function frame({ span }) {
 
 let info = build(params);
 frame(info);
-window.pool = { camera, controls, params }; // handy for poking at the scene from the browser console
+window.pool = { camera, controls, params, scene }; // handy for poking at the scene from the browser console
 
 // ---------- GUI ----------
 const gui = new GUI({ title: 'Pool design' });
@@ -537,6 +638,7 @@ const rebuild = () => { info = build(params); };
 const fp = gui.addFolder('Pool');
 fp.add(params.pool, 'width', 3, 10, 0.05).onChange(rebuild);
 fp.add(params.pool, 'length', 5, 20, 0.05).onChange(rebuild);
+fp.add(params.pool, 'cornerRadius', 0, 3, 0.05).name('corner radius').onChange(rebuild);
 fp.add(params.deep, 'from', -8, 8, 0.05).name('deep zone from').onChange(rebuild);
 fp.add(params.deep, 'to', -8, 8, 0.05).name('deep zone to').onChange(rebuild);
 fp.add(params.deep, 'depth', 1, 3, 0.05).name('deep depth').onChange(rebuild);
@@ -547,6 +649,7 @@ const fb = gui.addFolder('Planted beds');
 fb.add(params.plantBeds, 'width', 0.3, 3, 0.05).onChange(rebuild);
 fb.add(params.plantBeds, 'length', 0.3, 6, 0.05).onChange(rebuild);
 fb.add(params.plantBeds, 'endStrip', 0, 3, 0.05).name('end strip').onChange(rebuild);
+fb.add(params.plantBeds, 'cornerRadius', 0, 1.5, 0.05).name('corner radius').onChange(rebuild);
 fb.add(params.plantBeds, 'topDepth', 0.05, 0.6, 0.01).name('top depth').onChange(rebuild);
 fb.add(params.planting, 'reedsPerBed', 0, 15, 1).name('reed clumps').onChange(rebuild);
 fb.add(params.planting, 'lilyPads', 0, 60, 1).name('lily pads').onChange(rebuild);

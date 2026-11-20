@@ -8,17 +8,17 @@ Current design, as modelled from `2d_top_view.svg`. Dimensions are indicative on
 
 ### Layout
 
-The pool is a rectangle, set on a slight hill with a level terrace around it. The uphill side has the dock and filter; the downhill side has the seat, spillway and drain, looking out over the slope.
+The pool is a rectangle with generously rounded corners (1.5 m radius), set on a slight hill with a level terrace around it. The uphill side has the dock and filter; the downhill side has the seat, spillway and drain, looking out over the slope.
 
 Along its length the pool runs: **kids' entrance (shallow)** → **deep zone** → **planted shallow end**.
 
 | Element | Size | Depth / height | Notes |
 |---|---|---|---|
-| Pool | 5.7 × 11.4 m (65 m²) | — | 25 cm walls with stone coping |
+| Pool | 5.7 × 11.4 m (63 m²), 1.5 m corner radius | — | 25 cm walls with stone coping following the curves |
 | Deep zone | full width × 5.1 m (29 m²) | 1.8 m floor, ~1.7 m water | in the middle of the pool |
 | Shallow zones | full width, each end | 0.5 m floor, ~0.4 m water | vertical step down to the deep zone |
 | Kids' entrance | open shallow area between the corner beds at one end | two entry steps from the edge | kept clear of plants so children can walk through to the deep zone |
-| Planted beds | 4 corner beds 1.25 × 2.85 m, plus a 1 m strip along the far end wall (17 m², 27 % of surface) | bed surface 0.2 m below ground (~12 cm water) | reeds; lilies in the open shallow water at the planted end |
+| Planted beds | 4 corner beds 1.25 × 2.85 m with rounded inner corners, plus a 1 m strip along the far end wall (15 m², 24 % of surface) | bed surface 0.2 m below ground (~12 cm water) | reeds; lilies in the open shallow water at the planted end |
 | Seat | 0.9 m wide, along the full length of the deep zone's downhill wall | 0.45 m below ground | underwater bench facing into the pool, backed by the spillway |
 | Spillway | 4.2 × 0.43 m step at the back of the seat | top 2 cm below water level, as is the wall behind it | infinity edge: water spills over into the drain; somewhere to rest your arms while looking out |
 | Drain | 0.4 m wide, behind the spillway (4.2 m) | 0.3 m deep | outer kerb and the ground beyond sit below the spillway lip, so nothing rises above the water in the view |
@@ -37,7 +37,7 @@ Water spills over the infinity-edge spillway into the drain. From there it is pu
 ### Open points
 
 - **Drop-off at the kids' entrance:** the floor steps straight from 0.5 m to 1.8 m where the shallow entrance meets the deep zone. Consider a gentle slope, a step or a barrier.
-- **Planting share:** the beds cover about 27 % of the surface. Unfiltered natural pools usually need far more, so water quality depends on the filter.
+- **Planting share:** the beds cover about 24 % of the surface. Unfiltered natural pools usually need far more, so water quality depends on the filter.
 - **Edging beside the spillway:** the stone coping on either side of the spillway is 14 cm higher than the lip. It sits beside the view rather than in front of it, but it could be lowered, or the spillway extended along the whole seat.
 - **Scale:** all sizes follow from the assumed drawing scale and still need confirming.
 

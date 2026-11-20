@@ -14,6 +14,7 @@ export const config = {
     width: 5.7,          // across (x)
     length: 11.4,        // along (z)
     wallThickness: 0.25,
+    cornerRadius: 1.5,   // rounded corners (limited so the deep zone stays a straight band)
   },
 
   // Deep swim zone: spans the full width, between these z positions.
@@ -29,6 +30,7 @@ export const config = {
     width: 1.25,         // across (x), from the side wall inwards
     length: 2.85,        // along (z), from the end wall towards the deep zone
     endStrip: 1.0,       // depth of the far-end strip (0 = none)
+    cornerRadius: 0.5,   // rounding of each bed's inner corner
     topDepth: 0.2,       // bed surface below ground level (just under water)
   },
 
