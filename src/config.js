@@ -36,8 +36,8 @@ export const config = {
   // to water level, so water spills over into the drain.
   spillway: { centre: -0.1, length: 4.2, seatWidth: 0.45, seatDepth: 0.45 },
 
-  // Drain channel outside the downhill wall, along the deep zone. It empties through
-  // a pipe further down the bank.
+  // Drain channel outside the downhill wall, along the deep zone. The water collected
+  // here is pumped back to the filter (pipework not modelled).
   drain: { width: 0.4, depth: 0.3 },
 
   // Timber dock on the uphill side wall, beside the deep zone.

@@ -268,22 +268,6 @@ function build(p) {
     sheet.renderOrder = 11;
   }
 
-  // Outlet pipe from the drain, emerging further down the bank
-  {
-    const zc = (dz0 + dz1) / 2;
-    let xo = drX1 + 0.6;
-    while (heightAt(xo, zc) > drainWater - 0.25 && xo < drX1 + 4) xo += 0.1; // until it clears the ground
-    const yp = -drD - 0.02;
-    const len = xo - drX0;
-    const pipe = add(mesh(new THREE.CylinderGeometry(0.06, 0.06, len, 12), mat.concrete));
-    pipe.rotation.z = Math.PI / 2;
-    pipe.position.set(drX0 + len / 2, yp, zc);
-    const yg = heightAt(xo + 0.1, zc);
-    const fall = add(mesh(new THREE.CylinderGeometry(0.04, 0.07, yp - yg, 10, 1, true), mat.cascade, { cast: false, receive: false }));
-    fall.position.set(xo + 0.05, (yp + yg) / 2, zc);
-    fall.renderOrder = 11;
-  }
-
   // ---- dock ----
   {
     const top = 0.18, boardW = 0.14, gap = 0.008;

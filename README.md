@@ -10,7 +10,7 @@ A parametric Three.js model of the pool, translated from the plan drawing `2d_to
 - one shallow end is the **entrance for kids**: kept clear of plants, with entry steps
 - **planted beds** (reeds) in the four corners plus a strip along the far end wall; lilies in the open shallow water at that end
 - a timber **dock** with a ladder and a **filter** chamber on the uphill side
-- a **seat** inside the downhill wall; above it the wall is lowered as an infinity-edge **spillway** into a **drain** channel (kerb and ground beyond kept below the lip, so nothing rises above the water in the view), emptying through a pipe down the bank
+- a **seat** inside the downhill wall; above it the wall is lowered as an infinity-edge **spillway** into a **drain** channel (kerb and ground beyond kept below the lip, so nothing rises above the water in the view), from which water is pumped back to the filter
 - the site on a slight hill falling towards the spillway, levelled to a terrace around the pool
 - two trees, labels matching the drawing
 
