@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Natural Swimming Pool</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #bfd9ea; font-family: system-ui, sans-serif; }
+    canvas { display: block; }
+    #stats {
+      position: fixed; left: 12px; bottom: 12px; padding: 10px 14px;
+      background: rgba(20, 30, 35, 0.78); color: #e8f1f2; border-radius: 8px;
+      font-size: 13px; line-height: 1.55; pointer-events: none; max-width: 300px;
+    }
+    #stats b { color: #fff; }
+    #stats .hint { color: #a9c4c6; font-size: 12px; margin-top: 4px; }
+    #stats .warn { color: #ffcf7a; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="stats"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
