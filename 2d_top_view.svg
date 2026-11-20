@@ -89,6 +89,12 @@
        width="90.669434"
        height="20.670765"
        id="rect698-9-2-0-0" />
+    <rect
+       x="214.5085"
+       y="386.07465"
+       width="63.30426"
+       height="36.648605"
+       id="rect698-3-0-5" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -169,7 +175,7 @@
        style="white-space:pre;shape-inside:url(#rect698);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1519">plants</tspan></text>
+         id="tspan1814">plants</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,-19.920317,9.3508605)"
@@ -177,7 +183,7 @@
        style="white-space:pre;shape-inside:url(#rect698-3);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1521">tree</tspan></text>
+         id="tspan1816">tree</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,42.441076,17.308941)"
@@ -185,7 +191,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1523">shallow</tspan></text>
+         id="tspan1818">shallow</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,36.087078,2.4793601)"
@@ -193,7 +199,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9-8);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1525">entrance for kids</tspan></text>
+         id="tspan1820">entrance for kids</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,45.393781,45.080697)"
@@ -201,7 +207,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9-2);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1527">deep</tspan></text>
+         id="tspan1822">deep</tspan></text>
     <rect
        style="fill:#786721;stroke-width:0.264583"
        id="rect131-7"
@@ -216,7 +222,7 @@
        style="white-space:pre;shape-inside:url(#rect698-3-0);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1529">dock</tspan></text>
+         id="tspan1824">dock</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458333,0,0,0.26458333,6.1461692,24.41579)"
@@ -224,7 +230,7 @@
        style="white-space:pre;shape-inside:url(#rect698-3-0-6);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1531">filter</tspan></text>
+         id="tspan1826">filter</tspan></text>
     <rect
        style="fill:#808000;stroke-width:0.264583"
        id="rect131"
@@ -246,7 +252,7 @@
        style="white-space:pre;shape-inside:url(#rect698-9-2-0);display:inline;fill:#ffffff"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1533">seat/ spillway</tspan></text>
+         id="tspan1828">seat/ spillway</tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0,-0.26458333,0.26458333,0,32.055987,220.16703)"
@@ -256,6 +262,24 @@
        inkscape:transform-center-y="5.2895915"><tspan
          x="214.50781"
          y="396.99272"
-         id="tspan1535">drain</tspan></text>
+         id="tspan1830">drain</tspan></text>
+    <rect
+       style="fill:#999999;stroke-width:0.264583"
+       id="rect131-7-3-5-6-7"
+       width="14.236433"
+       height="13.2951"
+       x="97.996597"
+       y="204.09633" />
+    <text
+       xml:space="preserve"
+       transform="matrix(0.26458333,0,0,0.26458333,42.360804,104.18115)"
+       id="text696-6-6-9"
+       style="white-space:pre;shape-inside:url(#rect698-3-0-5);display:inline;fill:#ffffff"><tspan
+         x="214.50781"
+         y="396.99272"
+         id="tspan1832">rock </tspan><tspan
+         x="214.50781"
+         y="411.99272"
+         id="tspan1834">fountain</tspan></text>
   </g>
 </svg>

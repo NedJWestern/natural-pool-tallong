@@ -65,6 +65,10 @@ const mat = {
   steel: std(0xc9ced1, { metalness: 0.9, roughness: 0.25 }),
   reed: [0x5f8a3a, 0x6f9840, 0x557c33].map(c => std(c, { roughness: 0.9 })),
   cattail: std(0x5a3a22, { roughness: 1 }),
+  stone: [0x8c8a85, 0x7a7670, 0x9a958c, 0x857f74].map(c => std(c, { flatShading: true })),
+  irisLeaf: std(0x5d8a4a, { roughness: 0.9 }),
+  iris: std(0x6a4fb0, { roughness: 0.7 }),
+  shrub: [0x3f6b34, 0x4d7a3a, 0x5c7a34, 0x55803f].map(c => std(c, { roughness: 1, flatShading: true })),
   lily: std(0x3f7d36, { roughness: 0.6, side: THREE.DoubleSide }),
   flower: std(0xf2a6c2, { roughness: 0.7 }),
   flowerCentre: std(0xf5d142, { roughness: 0.7 }),
@@ -304,10 +308,16 @@ function build(p) {
   const stemGeo = new THREE.CylinderGeometry(0.006, 0.013, 1, 5);
   stemGeo.translate(0, 0.5, 0);
   const headGeo = new THREE.CapsuleGeometry(0.028, 0.16, 3, 8);
+  const fnt = p.fountain;
+  const nearFountain = (x, z, m) => fnt.enabled && Math.hypot(x - fnt.x, z - fnt.z) < fnt.size / 2 + m;
   for (const b of beds) {
     for (let c = 0; c < p.planting.reedsPerBed; c++) {
-      const cx = b.x0 + 0.25 + rnd() * (b.x1 - b.x0 - 0.5);
-      const cz = b.z0 + 0.25 + rnd() * (b.z1 - b.z0 - 0.5);
+      let cx, cz, tries = 0;
+      do {
+        cx = b.x0 + 0.25 + rnd() * (b.x1 - b.x0 - 0.5);
+        cz = b.z0 + 0.25 + rnd() * (b.z1 - b.z0 - 0.5);
+      } while (nearFountain(cx, cz, 0.35) && ++tries < 20);
+      if (tries >= 20) continue;
       const n = 8 + Math.floor(rnd() * 12);
       for (let i = 0; i < n; i++) {
         const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.3;
@@ -350,26 +360,107 @@ function build(p) {
     }
   }
 
-  // Grasses around the terrace edge
-  if (p.planting.edgeGrasses) {
+  // ---- rock fountain (in the far-end planted strip) ----
+  if (fnt.enabled) {
+    const R = fnt.size / 2, H = fnt.height;
+    const stoneGeo = new THREE.DodecahedronGeometry(1, 0);
+    const rock = (x, y, z, sx, sy, sz) => {
+      const st = add(mesh(stoneGeo, pick(rnd, mat.stone)));
+      st.scale.set(sx, sy, sz);
+      st.position.set(x, y, z);
+      st.rotation.set((rnd() - 0.5) * 0.4, rnd() * Math.PI, (rnd() - 0.5) * 0.4);
+    };
+    for (let i = 0; i < 6; i++) { // base ring, sitting in the bed
+      const a = (i / 6) * Math.PI * 2 + rnd() * 0.4, s0 = R * (0.38 + rnd() * 0.12);
+      rock(fnt.x + Math.cos(a) * R * 0.55, bedTop + s0 * 0.35, fnt.z + Math.sin(a) * R * 0.55, s0, s0 * 0.75, s0);
+    }
+    const midY = wl + H * 0.3;
+    for (let i = 0; i < 3; i++) { // middle tier
+      const a = (i / 3) * Math.PI * 2 + 0.5, s1 = R * 0.34;
+      rock(fnt.x + Math.cos(a) * R * 0.25, midY, fnt.z + Math.sin(a) * R * 0.25, s1, s1 * 0.9, s1);
+    }
+    const topY = wl + H * 0.75, s2 = R * 0.32;
+    rock(fnt.x, topY, fnt.z, s2 * 1.1, s2 * 0.5, s2);
+    // Bubbling water on top, trickles down the rocks, ripples on the pool
+    const crest = topY + s2 * 0.45;
+    const bub = add(mesh(new THREE.SphereGeometry(0.07, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat.cascade, { cast: false }));
+    bub.position.set(fnt.x, crest, fnt.z);
+    // Trickles curving over the rocks, mostly towards the pool (-z)
+    for (const a of [-Math.PI / 2 - 0.5, -Math.PI / 2 + 0.25, -Math.PI / 2 + 1.1]) {
+      const pt = (r, y) => new THREE.Vector3(fnt.x + Math.cos(a) * r, y, fnt.z + Math.sin(a) * r);
+      const path = new THREE.CatmullRomCurve3([
+        pt(0.03, crest), pt(s2 * 0.9, crest - 0.04), pt(R * 0.45, midY + R * 0.2),
+        pt(R * 0.62, midY - 0.05), pt(R * 0.8, wl + 0.02),
+      ]);
+      const tr = add(mesh(new THREE.TubeGeometry(path, 24, 0.014, 6), mat.cascade, { cast: false, receive: false }));
+      tr.renderOrder = 11;
+    }
+    for (const [r0, r1] of [[R * 0.85, R * 0.92], [R * 1.05, R * 1.1]]) {
+      const ring = add(mesh(new THREE.RingGeometry(r0, r1, 40), mat.cascade, { cast: false, receive: false }));
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(fnt.x, wl + 0.004, fnt.z);
+      ring.renderOrder = 11;
+    }
+  }
+
+  // ---- border planting outside the pool ----
+  // Grasses and irises near the coping, shrubs further back. Kept off the downhill side
+  // (the view), the dock and filter, the path to the dock and the kids' entrance.
+  if (p.border.enabled) {
     const grassGeo = new THREE.ConeGeometry(0.04, 1, 4);
     grassGeo.translate(0, 0.5, 0);
+    const leafGeo = new THREE.BoxGeometry(0.035, 1, 0.008);
+    leafGeo.translate(0, 0.5, 0);
+    const bloomGeo = new THREE.SphereGeometry(0.045, 8, 6);
+    const shrubGeo = new THREE.IcosahedronGeometry(1, 1);
     const inRect = (x, z, r, m) => x > r.x0 - m && x < r.x1 + m && z > r.z0 - m && z < r.z1 + m;
-    const poolRect = { x0: -hx - t, x1: drX1, z0: -hz - t, z1: hz + t };
+    const rectDist = (x, z, r) => Math.hypot(Math.max(0, r.x0 - x, x - r.x1), Math.max(0, r.z0 - z, z - r.z1));
+    const poolRect = { x0: -hx - t - out, x1: drX1 + out, z0: -hz - t - out, z1: hz + t + out };
+    const struct = { x0: Math.min(dock.x0, filt.x0), x1: -hx - t, z0: Math.min(dock.z0, filt.z0), z1: Math.max(dock.z1, filt.z1) };
+    const bw = p.border.width;
     let placed = 0;
-    for (let tries = 0; tries < 600 && placed < 26; tries++) {
-      const x = -hx - 4 + rnd() * (W + 6), z = -hz - 2.5 + rnd() * (L + 5);
-      if (inRect(x, z, poolRect, 0.4) || inRect(x, z, dock, 0.3) || inRect(x, z, filt, 0.3)) continue;
-      if (x > drX1 - 0.2 && z > dz0 - 1 && z < dz1 + 1) continue; // keep the view from the seat clear
-      if (!inRect(x, z, poolRect, 2.2)) continue;
+    for (let tries = 0; tries < p.border.plants * 40 && placed < p.border.plants; tries++) {
+      const x = poolRect.x0 - bw - 2.5 + rnd() * (poolRect.x1 - poolRect.x0 + bw + 2.5);
+      const z = poolRect.z0 - bw + rnd() * (poolRect.z1 - poolRect.z0 + 2 * bw);
+      const dPool = rectDist(x, z, poolRect), dStruct = rectDist(x, z, struct);
+      if (!((dPool > 0.15 && dPool < bw) || (dStruct > 0.15 && dStruct < bw * 0.7))) continue;
+      if (inRect(x, z, poolRect, 0.15) || inRect(x, z, dock, 0.15) || inRect(x, z, filt, 0.15)) continue;
+      if (x > hx + t) continue;                                             // downhill view
+      if (x < dock.x0 && z > dock.z0 - 0.2 && z < dock.z1 + 0.2) continue;  // path to the dock
+      if (z < -hz - t && Math.abs(x) < 1.1) continue;                        // kids' entrance
       placed++;
-      const m = pick(rnd, mat.grass);
-      for (let k = 0; k < 14; k++) {
-        const bx = x + (rnd() - 0.5) * 0.25, bz = z + (rnd() - 0.5) * 0.25;
-        const blade = add(mesh(grassGeo, m, { receive: false }));
-        blade.scale.set(1, 0.35 + rnd() * 0.45, 1);
-        blade.position.set(bx, heightAt(bx, bz) - 0.02, bz);
-        blade.rotation.set((rnd() - 0.5) * 0.9, 0, (rnd() - 0.5) * 0.9);
+      const y = heightAt(x, z) - 0.02;
+      const far = Math.min(dPool, dStruct + 0.3);
+      const kind = far > bw * 0.45 && rnd() < 0.7 ? 'shrub' : rnd() < 0.6 ? 'grass' : 'iris';
+      if (kind === 'shrub') {
+        const r = 0.3 + rnd() * 0.3, m = pick(rnd, mat.shrub);
+        for (let k = 0; k < 3; k++) {
+          const sh = add(mesh(shrubGeo, m));
+          const rr = r * (0.6 + rnd() * 0.4);
+          sh.scale.set(rr, rr * 0.8, rr);
+          sh.position.set(x + (rnd() - 0.5) * r, y + rr * 0.6, z + (rnd() - 0.5) * r);
+          sh.rotation.y = rnd() * Math.PI;
+        }
+      } else if (kind === 'grass') {
+        const m = pick(rnd, mat.grass), hgt = 0.5 + rnd() * 0.5;
+        for (let k = 0; k < 18; k++) {
+          const bx = x + (rnd() - 0.5) * 0.3, bz = z + (rnd() - 0.5) * 0.3;
+          const blade = add(mesh(grassGeo, m, { receive: false }));
+          blade.scale.set(1, hgt * (0.6 + rnd() * 0.4), 1);
+          blade.position.set(bx, y, bz);
+          blade.rotation.set((rnd() - 0.5) * 0.9, 0, (rnd() - 0.5) * 0.9);
+        }
+      } else {
+        for (let k = 0; k < 10; k++) {
+          const leaf = add(mesh(leafGeo, mat.irisLeaf, { receive: false }));
+          const hgt = 0.45 + rnd() * 0.3;
+          leaf.scale.set(1, hgt, 1);
+          leaf.position.set(x + (rnd() - 0.5) * 0.2, y, z + (rnd() - 0.5) * 0.2);
+          leaf.rotation.set((rnd() - 0.5) * 0.4, rnd() * Math.PI, (rnd() - 0.5) * 0.4);
+        }
+        for (let k = 0; k < 3; k++) {
+          add(mesh(bloomGeo, mat.iris)).position.set(x + (rnd() - 0.5) * 0.25, y + 0.65 + rnd() * 0.15, z + (rnd() - 0.5) * 0.25);
+        }
       }
     }
   }
@@ -398,6 +489,7 @@ function build(p) {
       label('plants', (beds[0].x0 + beds[0].x1) / 2, 1.2, (beds[0].z0 + beds[0].z1) / 2),
       label('seat / spillway', hx - seatW / 2, 0.25, (spZ0 + spZ1) / 2),
       label('drain', (drX0 + drX1) / 2, 0.25, dz1 - 0.6),
+      ...(fnt.enabled ? [label('rock fountain', fnt.x, wl + fnt.height + 0.4, fnt.z)] : []),
       label('dock', (dock.x0 + dock.x1) / 2, 0.45, (dock.z0 + dock.z1) / 2),
       label('filter', (filt.x0 + filt.x1) / 2, p.filter.height + 0.3, (filt.z0 + filt.z1) / 2),
     );
@@ -466,7 +558,10 @@ ff.add(params.dock, 'depth', 0.5, 5, 0.05).name('dock depth').onChange(rebuild);
 ff.add(params.filter, 'centre', -6, 6, 0.05).name('filter centre').onChange(rebuild);
 const fs = gui.addFolder('Site');
 fs.add(params.site, 'slope', 0, 0.4, 0.01).onChange(rebuild);
-fs.add(params.planting, 'edgeGrasses').name('edge grasses').onChange(rebuild);
+fs.add(params.border, 'enabled').name('border planting').onChange(rebuild);
+fs.add(params.border, 'width', 0.5, 4, 0.1).name('border width').onChange(rebuild);
+fs.add(params.border, 'plants', 0, 150, 1).name('border plants').onChange(rebuild);
+fs.add(params.fountain, 'enabled').name('rock fountain').onChange(rebuild);
 fs.add(params.planting, 'seed', 1, 999, 1).onChange(rebuild);
 fs.add(params, 'showLabels').name('labels').onChange(rebuild);
 fb.close(); ff.close(); fs.close();

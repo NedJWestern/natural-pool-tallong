@@ -46,6 +46,14 @@ export const config = {
   // Filter chamber on the uphill side, next to the dock.
   filter: { centre: -2.5, length: 2.8, depth: 2.15, height: 0.35 },
 
+  // Small ornamental rock fountain in the far-end planted strip (absolute position).
+  fountain: { enabled: true, x: -0.05, z: 5.0, size: 1.4, height: 0.8 },
+
+  // Planting outside the pool: grasses and irises by the edge, shrubs further back.
+  // Kept off the downhill side so the view over the spillway stays open, and clear of
+  // the dock, the filter, the path to the dock and the kids' entrance.
+  border: { enabled: true, width: 1.8, plants: 60 },
+
   // Trees (absolute positions; radius is the canopy radius).
   trees: [
     { x: -6.35, z: -4.25, radius: 1.3 },
@@ -61,7 +69,6 @@ export const config = {
   planting: {
     reedsPerBed: 5,      // reed clumps in each planted bed
     lilyPads: 14,        // in the open shallow areas
-    edgeGrasses: true,
     seed: 7,             // change to shuffle plant / stone placement
   },
 
